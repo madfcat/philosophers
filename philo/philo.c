@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/21 19:12:23 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/23 15:36:00 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,10 +38,18 @@ int	time_to_sleep = 5000;
 // usleep()
 
 void *routine(void	*arg) {
-	t_philo *philo = (t_philo *)arg;
+	t_philo	*philo;
+
+	philo = (t_philo *)arg;
+	// gettimeofday(&philo->not_eaten_since, NULL);
+	long int start = (&philo->not_eaten_since)->tv_sec;
 	printf("philo %d runs!\n", (int)philo->id);
+	printf("not eaten since %ld\n", start);
 	usleep(5000000);
-	printf("5 seconds passed");
+	gettimeofday(&philo->not_eaten_since, NULL);
+	long int end = (&philo->not_eaten_since)->tv_sec;
+	printf("Now times is %ld\n", end);
+	printf("Time passed %ld\n", end - start);
 	return (NULL);
 }
 
@@ -51,9 +59,8 @@ t_philo	*init_philo(void)
 
 	philo = (t_philo *)malloc(sizeof(t_philo));
 	philo->no = 1;
-	philo->left_fork_available = true;
+	philo->fork_available = true;
 	gettimeofday(&philo->not_eaten_since, NULL);
-	// (pthread_t **)malloc(sizeof(pthread_t *));
 	return (philo);
 }
 
@@ -64,9 +71,16 @@ int	main(int argc, char const *argv[])
 
 	// t_philo **philos = (t_philo *)malloc((number_of_philosophers + 1) * sizeof(t_philo *));
 	// philos[number_of_philosophers] = NULL;
+
+
 	t_philo *philo1;
 	philo1 = init_philo();
-	pthread_create(&philo1->id, NULL, &routine, &philo1);
+
+	// 1. init linked list philosphers here creating threads and running loop for each philosopher
+	// 2. join threads in a loop
+
+	// each philosopher has a loop eat sleep think
+	pthread_create(&philo1->id, NULL, &routine, philo1);
 	pthread_join(philo1->id, NULL);
 	return (0);
 }
