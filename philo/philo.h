@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/25 18:34:04 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/26 00:21:53 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,9 +23,12 @@ typedef enum e_bool {
     true = 1
 }	t_bool;
 
+typedef struct s_philo t_philo;
+
 typedef struct s_state {
 	// struct timeval	tp;
 	t_bool	still_alive;
+	t_philo	*head;
 }	t_state;
 
 // fork_available is a philosopher's left fork 

@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/25 23:24:59 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/26 01:37:55 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,14 +28,19 @@ pthread_mutex_destroy, pthread_mutex_lock,
 pthread_mutex_unlock
 */
 
-int	number_of_philosophers = 5;
-int	time_to_die = 17000;
-int	time_to_eat = 5000;
-int	time_to_sleep = 5000;
+int	number_of_philosophers = 6;
+int	time_to_die = 110;
+int	time_to_eat = 50;
+int	time_to_sleep = 50;
 // number_of_times_each_philosopher_must_eat
 
 #include "philo.h"
 // usleep()
+
+unsigned long gettime_usec(struct timeval time)
+{
+	return (time.tv_sec * 1000000 + time.tv_usec);
+}
 
 void *routine(void	*arg)
 {
@@ -46,7 +51,7 @@ void *routine(void	*arg)
 
 	// printf("philo %lu is thinking!\n", (unsigned long)philo->id);
 	printf("philo %d is thinking!\n", philo->no);
-	printf("philo %d has not eaten since %ld\n", philo->no, philo->meal_time.tv_sec);
+	// printf("philo %d has not eaten since %ld\n", philo->no, gettime_usec(philo->meal_time));
 		
 	while(philo->state->still_alive)
 	{
@@ -69,18 +74,20 @@ void *routine(void	*arg)
 		}
 
 		gettimeofday(&philo->curr_time, NULL);
-		if (philo->state->still_alive && (philo->curr_time.tv_sec - philo->meal_time.tv_sec) * 1000 > time_to_die)
+		// printf("philo %d last meal was %lu ago\n", philo->no, gettime_usec(philo->curr_time) - gettime_usec(philo->meal_time));
+		if (philo->state->still_alive && (gettime_usec(philo->curr_time) - gettime_usec(philo->meal_time)) > (unsigned long)(time_to_die * 1000))
 		{
+			printf("philo %d last meal was %lu ago\n", philo->no, gettime_usec(philo->curr_time) - gettime_usec(philo->meal_time));
 			printf("philo %d has died\n", philo->no);
 			philo->state->still_alive = false;
 			return (NULL);
 		}
 
-		gettimeofday(&philo->curr_time, NULL);
+/* 		gettimeofday(&philo->curr_time, NULL);
 		if (philo->state->still_alive && philo->forks_in_use == 2)
 		{
-			printf("It took philo %d %ld seconds to finish eating\n", philo->no, philo->curr_time.tv_sec - philo->meal_time.tv_sec);
-		}
+			printf("It took philo %d %ld microseconds to finish eating\n", philo->no, gettime_usec(philo->curr_time) - gettime_usec(philo->meal_time));
+		} */
 
 
 		// give forks back
@@ -132,7 +139,9 @@ int	main(int argc, char const *argv[])
 {
 	pthread_mutex_t mutex;
 	t_state			state;
-	t_philo			**philos;
+	t_philo			*curr;
+	// t_philo			*prev;
+	// t_philo			**philos;
 	int 			i;
 	pthread_mutex_init(&mutex, NULL);
 	(void)argc;
@@ -141,61 +150,43 @@ int	main(int argc, char const *argv[])
 	state.still_alive = true;
 
 	// 1. init linked list philosphers here creating threads and running loop for each philosopher
-	philos = (t_philo **)malloc((number_of_philosophers + 1) * sizeof(t_philo *));
-	philos[number_of_philosophers] = NULL;
+	// philos = (t_philo **)malloc((number_of_philosophers + 1) * sizeof(t_philo *));
+	// philos[number_of_philosophers] = NULL;
 
-	philos[0] = create_philo(1, &mutex, &state);
+	// philos[0] = create_philo(1, &mutex, &state);
+	state.head = create_philo(1, &mutex, &state);
+	curr = state.head;
 	i = 1;
 	while (i < number_of_philosophers)
 	{
-		philos[i] = create_philo(i + 1, &mutex, &state);
-		connect_philo(philos[i - 1], philos[i]);
+		curr->next = create_philo(i + 1, &mutex, &state);
+		connect_philo(curr, curr->next);
+		// prev = curr;
+		curr = curr->next;
 		i++;
 	}
-	connect_philo(philos[i - 1], philos[0]);
-
-/* 	t_philo *philo1;
-	philo1 = create_philo(1, &mutex, &state);
-	t_philo *philo2;
-	philo2 = create_philo(2, &mutex, &state);
-	connect_philo(philo1, philo2);
-	t_philo *philo3;
-	philo3 = create_philo(3, &mutex, &state);
-	connect_philo(philo2, philo3);
-	t_philo *philo4;
-	philo4 = create_philo(4, &mutex, &state);
-	connect_philo(philo3, philo4);
-	t_philo *philo5;
-	philo5 = create_philo(5, &mutex, &state);
-	connect_philo(philo4, philo5);
-	//connect last to first
-	connect_philo(philo5, philo1); */
-
-
-	// each philosopher has a loop think eat sleep 
-	i = 0;
-	while (i < number_of_philosophers)
+	connect_philo(curr, state.head);
+ 
+	// each philosopher has a loop think eat sleep
+	curr = state.head;
+	// while (curr->no <= number_of_philosophers)
+	while (curr->next != state.head)
 	{
-		pthread_create(&philos[i]->id, NULL, &routine, philos[i]);
-		i++;
+		pthread_create(&curr->id, NULL, &routine, curr);
+		curr = curr->next;
 	}
-/* 	pthread_create(&philo1->id, NULL, &routine, philo1);
-	pthread_create(&philo2->id, NULL, &routine, philo2);
-	pthread_create(&philo3->id, NULL, &routine, philo3);
-	pthread_create(&philo4->id, NULL, &routine, philo4);
-	pthread_create(&philo5->id, NULL, &routine, philo5); */
+	pthread_create(&curr->id, NULL, &routine, curr);
+	
 	// 2. join threads in a loop
-	i = 0;
-	while (i < number_of_philosophers)
+	curr = state.head;
+	// while (curr->no <= number_of_philosophers)
+	while (curr->next != state.head)
 	{
-		pthread_join(philos[i]->id, NULL);
-		i++;
+		pthread_join(curr->id, NULL);
+		curr = curr->next;
 	}
-/* 	pthread_join(philo1->id, NULL);
-	pthread_join(philo2->id, NULL);
-	pthread_join(philo3->id, NULL);
-	pthread_join(philo4->id, NULL);
-	pthread_join(philo5->id, NULL); */
+	pthread_join(curr->id, NULL);
+
 	pthread_mutex_destroy(&mutex);
 	return (0);
 }
