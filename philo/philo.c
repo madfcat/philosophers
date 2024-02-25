@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/25 19:25:56 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/25 23:24:59 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,8 +132,8 @@ int	main(int argc, char const *argv[])
 {
 	pthread_mutex_t mutex;
 	t_state			state;
-/* 	t_philo			**philos;
-	int 			i; */
+	t_philo			**philos;
+	int 			i;
 	pthread_mutex_init(&mutex, NULL);
 	(void)argc;
 	(void)argv;
@@ -141,19 +141,20 @@ int	main(int argc, char const *argv[])
 	state.still_alive = true;
 
 	// 1. init linked list philosphers here creating threads and running loop for each philosopher
-/* 	philos = (t_philo **)malloc((number_of_philosophers + 1) * sizeof(t_philo *));
+	philos = (t_philo **)malloc((number_of_philosophers + 1) * sizeof(t_philo *));
 	philos[number_of_philosophers] = NULL;
 
-	i = 0;
-	philos[i] = create_philo(i + 1, &mutex, &state);
+	philos[0] = create_philo(1, &mutex, &state);
+	i = 1;
 	while (i < number_of_philosophers)
 	{
 		philos[i] = create_philo(i + 1, &mutex, &state);
 		connect_philo(philos[i - 1], philos[i]);
+		i++;
 	}
-	connect_philo(philos[i - 1], philos[0]); */
+	connect_philo(philos[i - 1], philos[0]);
 
-	t_philo *philo1;
+/* 	t_philo *philo1;
 	philo1 = create_philo(1, &mutex, &state);
 	t_philo *philo2;
 	philo2 = create_philo(2, &mutex, &state);
@@ -168,31 +169,33 @@ int	main(int argc, char const *argv[])
 	philo5 = create_philo(5, &mutex, &state);
 	connect_philo(philo4, philo5);
 	//connect last to first
-	connect_philo(philo5, philo1);
+	connect_philo(philo5, philo1); */
 
 
 	// each philosopher has a loop think eat sleep 
-/* 	i = 0;
+	i = 0;
 	while (i < number_of_philosophers)
 	{
 		pthread_create(&philos[i]->id, NULL, &routine, philos[i]);
-	} */
-	pthread_create(&philo1->id, NULL, &routine, philo1);
+		i++;
+	}
+/* 	pthread_create(&philo1->id, NULL, &routine, philo1);
 	pthread_create(&philo2->id, NULL, &routine, philo2);
 	pthread_create(&philo3->id, NULL, &routine, philo3);
 	pthread_create(&philo4->id, NULL, &routine, philo4);
-	pthread_create(&philo5->id, NULL, &routine, philo5);
+	pthread_create(&philo5->id, NULL, &routine, philo5); */
 	// 2. join threads in a loop
-/* 	i = 0;
+	i = 0;
 	while (i < number_of_philosophers)
 	{
-	pthread_join(philos[i]->id, NULL);
-	} */
-	pthread_join(philo1->id, NULL);
+		pthread_join(philos[i]->id, NULL);
+		i++;
+	}
+/* 	pthread_join(philo1->id, NULL);
 	pthread_join(philo2->id, NULL);
 	pthread_join(philo3->id, NULL);
 	pthread_join(philo4->id, NULL);
-	pthread_join(philo5->id, NULL);
+	pthread_join(philo5->id, NULL); */
 	pthread_mutex_destroy(&mutex);
 	return (0);
 }
