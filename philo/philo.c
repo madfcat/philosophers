@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/26 01:37:55 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/26 02:06:34 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -188,5 +188,6 @@ int	main(int argc, char const *argv[])
 	pthread_join(curr->id, NULL);
 
 	pthread_mutex_destroy(&mutex);
+	free_philos(state.head);
 	return (0);
 }

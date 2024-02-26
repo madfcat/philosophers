@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/26 00:21:53 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/26 02:07:11 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,5 +45,7 @@ typedef struct s_philo
 	pthread_mutex_t	*mutex;
 	t_state			*state;
 }	t_philo;
+
+void	free_philos(t_philo *head);
 
 #endif

@@ -4,7 +4,8 @@ CFLAGS = -Wall -Wextra -Werror
 NAME = philo
 HEADER = philo.h
 
-SRCS = philo.c
+SRCS = philo.c \
+	philo_utils.c
 
 OBJ_DIR = obj/
 OBJS = $(SRCS:.c=.o)
