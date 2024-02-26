@@ -5,7 +5,8 @@ NAME = philo
 HEADER = philo.h
 
 SRCS = philo.c \
-	philo_utils.c
+	philo_utils.c \
+	ft_atoi.c
 
 OBJ_DIR = obj/
 OBJS = $(SRCS:.c=.o)

@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/26 22:19:56 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/26 23:05:50 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 Arguments:
 number_of_philosophers time_to_die time_to_eat
 time_to_sleep
-[number_of_times_each_philosopher_must_eat]
+[meals_per_philo]
 */
 
 
@@ -28,28 +28,13 @@ pthread_mutex_destroy, pthread_mutex_lock,
 pthread_mutex_unlock
 */
 
-int	number_of_philosophers = 17;
+/* int	number_of_philosophers = 17;
 int	time_to_die = 200;
 int	time_to_eat = 70;
 int	time_to_sleep = 50;
-// number_of_times_each_philosopher_must_eat
+int meals_per_philo = 10; */
 
 #include "philo.h"
-
-unsigned long gettime_usec(struct timeval time)
-{
-	return (time.tv_sec * 1000000 + time.tv_usec);
-}
-
-int	print_message(t_philo *philo, char *msg)
-{
-	if (gettimeofday(&philo->state->curr_time, NULL) != EXIT_SUCCESS)
-		return (EXIT_FAILURE);
-	if (printf("%lu %2d %s\n",
-		gettime_usec(philo->state->curr_time) / 1000, philo->no, msg) < 0)
-		return (EXIT_FAILURE);
-	return (EXIT_SUCCESS);
-}
 
 /**
  * @return NULL on success
@@ -90,11 +75,22 @@ void *routine(void	*arg)
 			// printf("philo %d is eating!\n", philo->no);
 			philo->is_thinking = false;
 			print_message(philo, "is eating");
-			usleep(time_to_eat * 1000);
+			if (philo->state->meals_per_philo > 0)
+			{
+				pthread_mutex_lock(philo->state->meal_mutex);
+				philo->state->meals_left -= 1;
+				pthread_mutex_unlock(philo->state->meal_mutex);
+			}
+			usleep(philo->state->time_to_eat * 1000);
+			if (!philo->state->meals_left)
+			{
+				philo->state->still_alive = false;
+				return (NULL);
+			}
 		}
 
 		gettimeofday(&philo->state->curr_time, NULL);
-		if (philo->state->still_alive && (gettime_usec(philo->state->curr_time) - gettime_usec(philo->meal_time)) > (unsigned long)(time_to_die * 1000))
+		if (philo->state->still_alive && (gettime_usec(philo->state->curr_time) - gettime_usec(philo->meal_time)) > (unsigned long)(philo->state->time_to_die * 1000))
 		{
 			pthread_mutex_lock(philo->state->mutex);
 			if (philo->state->still_alive != false)
@@ -117,7 +113,7 @@ void *routine(void	*arg)
 			philo->forks_in_use -= 2;
 			philo->is_thinking = false;
 			print_message(philo, "is sleeping");
-			usleep(time_to_sleep * 1000);
+			usleep(philo->state->time_to_sleep * 1000);
 			if (!philo->state->still_alive)
 				return (NULL);
 		}
@@ -143,13 +139,13 @@ t_philo	*create_philo(int number, pthread_mutex_t *mutex, t_state *state)
 	if (!philo)
 		return (NULL);
 	philo->no = number;
+	philo->next = NULL;
+	philo->prev = NULL;
 	philo->fork_available = true;
 	philo->forks_in_use = 0;
 	if (gettimeofday(&philo->meal_time, NULL) != EXIT_SUCCESS)
-		;
-		// return (NULL);
-	philo->next = NULL;
-	philo->prev = NULL;
+		return (NULL);
+	philo->eat_count = 0;
 	philo->mutex = mutex;
 	philo->state = state;
 	return (philo);
@@ -165,7 +161,7 @@ int	init_philos(t_state *state, pthread_mutex_t *mutex)
 		return (EXIT_FAILURE);
 	curr = state->head;
 	i = 1;
-	while (i < number_of_philosophers)
+	while (i < state->number_of_philosophers)
 	{
 		curr->next = create_philo(i + 1, mutex, state);
 		if (!curr->next)
@@ -216,40 +212,53 @@ int	join_philo_threads(t_state *state)
 	return (EXIT_SUCCESS);
 }
 
+int	init_state(t_state *state, char *argv[],
+	pthread_mutex_t *state_mutex, pthread_mutex_t *meal_mutex)
+{
+	state->number_of_philosophers = ft_atoi(argv[1]);
+	state->time_to_die = ft_atoi(argv[2]);
+	state->time_to_eat = ft_atoi(argv[3]);
+	state->time_to_sleep = ft_atoi(argv[4]);
+	if (!argv[5])
+		state->meals_per_philo = -1;
+	else
+		state->meals_per_philo = ft_atoi(argv[5]);
+	state->meals_left = ft_atoi(argv[1]) * state->meals_per_philo;
+	if (pthread_mutex_init(state_mutex, NULL) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
+	if (pthread_mutex_init(meal_mutex, NULL) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
+	state->still_alive = true;
+	state->mutex = state_mutex;
+	state->meal_mutex = meal_mutex;
+	return (EXIT_SUCCESS);
+}
+
 int	main(int argc, char const *argv[])
 {
 	pthread_mutex_t mutex;
 	pthread_mutex_t state_mutex;
+	pthread_mutex_t meal_mutex;
 	t_state			state;
-	int				err;
 
-	pthread_mutex_init(&mutex, NULL);
-	pthread_mutex_init(&state_mutex, NULL);
-	(void)argc;
-	(void)argv;
-
-	state.still_alive = true;
-	state.mutex = &state_mutex;
-
-	// 1. init linked list philosphers here creating threads and running loop for each philosopher
-	if (init_philos(&state, &mutex) != 0)
+	if (argc < 5 || argc > 6)
 		return (EXIT_FAILURE);
- 
-	/**
-	 * Create philosophers threads
-	*/
+	if (init_state(&state, argv, &state_mutex, &meal_mutex) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
+	if (pthread_mutex_init(&mutex, NULL) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
+	if (init_philos(&state, &mutex) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
 	if (create_philo_threads(&state) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
-	
-	/**
-	 * Join philosophers threads
-	*/
 	if (join_philo_threads(&state) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
-
-	err = pthread_mutex_destroy(&mutex);
-	if (err != 0)
-		return (err);
+	if (pthread_mutex_destroy(&mutex) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
+	if (pthread_mutex_destroy(&state_mutex) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
+	if (pthread_mutex_destroy(&meal_mutex) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
 	free_philos(state.head);
 	return (EXIT_SUCCESS);
 }

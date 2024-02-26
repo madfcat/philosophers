@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/26 17:00:50 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/26 22:52:48 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,9 +27,17 @@ typedef enum e_bool {
 typedef struct s_philo t_philo;
 
 typedef struct s_state {
+	int	number_of_philosophers;
+	int	time_to_die;
+	int	time_to_eat;
+	int	time_to_sleep;
+	int meals_per_philo;
+	int meals_left;
+
 	t_bool			still_alive;
 	t_philo			*head;
 	pthread_mutex_t	*mutex;
+	pthread_mutex_t	*meal_mutex;
 	struct timeval	curr_time;
 }	t_state;
 
@@ -37,17 +45,24 @@ typedef struct s_state {
 typedef struct s_philo
 {
 	int				no;
-	t_bool			fork_available;
-	unsigned char	forks_in_use;
-	struct timeval	meal_time;
 	pthread_t		id;
 	struct s_philo	*next;
 	struct s_philo	*prev;
+	
+	t_bool			fork_available;
+	unsigned char	forks_in_use;
+	struct timeval	meal_time;
+	unsigned int	eat_count;
+	t_bool			is_thinking;
+
 	pthread_mutex_t	*mutex;
 	t_state			*state;
-	t_bool			is_thinking;
 }	t_philo;
 
-void	free_philos(t_philo *head);
+unsigned long	gettime_usec(struct timeval time);
+int				print_message(t_philo *philo, char *msg);
+void			free_philos(t_philo *head);
+
+int				ft_atoi(const char *str);
 
 #endif
