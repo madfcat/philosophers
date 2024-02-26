@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/26 17:22:37 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/26 22:06:37 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,8 +45,8 @@ int	print_message(t_philo *philo, char *msg)
 {
 	if (gettimeofday(&philo->state->curr_time, NULL) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
-	if (printf("%lu %d %s\n",
-		gettime_usec(philo->meal_time) / 1000, philo->no, msg) < 0)
+	if (printf("%lu %2d %s\n",
+		gettime_usec(philo->state->curr_time) / 1000, philo->no, msg) < 0)
 		return (EXIT_FAILURE);
 	return (EXIT_SUCCESS);
 }
@@ -76,7 +76,9 @@ void *routine(void	*arg)
 		{
 			pthread_mutex_lock(philo->mutex);
 			philo->fork_available = false;
+			print_message(philo, "has taken a fork");
 			philo->next->fork_available = false;
+			print_message(philo, "has taken a fork");
 			pthread_mutex_unlock(philo->mutex);
 			philo->forks_in_use += 2;
 		}
@@ -159,8 +161,6 @@ int	main(int argc, char const *argv[])
 	pthread_mutex_t state_mutex;
 	t_state			state;
 	t_philo			*curr;
-	// t_philo			*prev;
-	// t_philo			**philos;
 	int 			i;
 	int				err;
 
@@ -173,10 +173,7 @@ int	main(int argc, char const *argv[])
 	state.mutex = &state_mutex;
 
 	// 1. init linked list philosphers here creating threads and running loop for each philosopher
-	// philos = (t_philo **)malloc((number_of_philosophers + 1) * sizeof(t_philo *));
-	// philos[number_of_philosophers] = NULL;
 
-	// philos[0] = create_philo(1, &mutex, &state);
 	state.head = create_philo(1, &mutex, &state);
 	if (!state.head)
 		return (EXIT_FAILURE);
@@ -188,7 +185,6 @@ int	main(int argc, char const *argv[])
 		if (!curr->next)
 			return (EXIT_FAILURE);
 		connect_philo(curr, curr->next);
-		// prev = curr;
 		curr = curr->next;
 		i++;
 	}
