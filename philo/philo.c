@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/26 22:06:37 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/26 22:19:56 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,13 +155,72 @@ t_philo	*create_philo(int number, pthread_mutex_t *mutex, t_state *state)
 	return (philo);
 }
 
+int	init_philos(t_state *state, pthread_mutex_t *mutex)
+{
+	t_philo	*curr;
+	int i;
+
+	state->head = create_philo(1, mutex, state);
+	if (!state->head)
+		return (EXIT_FAILURE);
+	curr = state->head;
+	i = 1;
+	while (i < number_of_philosophers)
+	{
+		curr->next = create_philo(i + 1, mutex, state);
+		if (!curr->next)
+			return (EXIT_FAILURE);
+		connect_philo(curr, curr->next);
+		curr = curr->next;
+		i++;
+	}
+	connect_philo(curr, state->head);
+	return (EXIT_SUCCESS);
+}
+
+int	create_philo_threads(t_state *state)
+{
+	t_philo	*curr;
+	int		err;
+
+	curr = state->head;
+	while (curr->next != state->head)
+	{
+		err = pthread_create(&curr->id, NULL, &routine, curr);
+		if (err != 0)
+			return (err);
+		curr = curr->next;
+	}
+	err = pthread_create(&curr->id, NULL, &routine, curr);
+	if (err != 0)
+		return (err);
+	return (EXIT_SUCCESS);
+}
+
+int	join_philo_threads(t_state *state)
+{
+	t_philo	*curr;
+	int		err;
+	
+	curr = state->head;
+	while (curr->next != state->head)
+	{
+		err = pthread_join(curr->id, NULL);
+		if (err != 0)
+			return (err);
+		curr = curr->next;
+	}
+	err = pthread_join(curr->id, NULL);
+	if (err != 0)
+		return (err);
+	return (EXIT_SUCCESS);
+}
+
 int	main(int argc, char const *argv[])
 {
 	pthread_mutex_t mutex;
 	pthread_mutex_t state_mutex;
 	t_state			state;
-	t_philo			*curr;
-	int 			i;
 	int				err;
 
 	pthread_mutex_init(&mutex, NULL);
@@ -173,52 +232,20 @@ int	main(int argc, char const *argv[])
 	state.mutex = &state_mutex;
 
 	// 1. init linked list philosphers here creating threads and running loop for each philosopher
-
-	state.head = create_philo(1, &mutex, &state);
-	if (!state.head)
+	if (init_philos(&state, &mutex) != 0)
 		return (EXIT_FAILURE);
-	curr = state.head;
-	i = 1;
-	while (i < number_of_philosophers)
-	{
-		curr->next = create_philo(i + 1, &mutex, &state);
-		if (!curr->next)
-			return (EXIT_FAILURE);
-		connect_philo(curr, curr->next);
-		curr = curr->next;
-		i++;
-	}
-	connect_philo(curr, state.head);
  
 	/**
 	 * Create philosophers threads
 	*/
-	curr = state.head;
-	while (curr->next != state.head)
-	{
-		err = pthread_create(&curr->id, NULL, &routine, curr);
-		if (err != 0)
-			return (err);
-		curr = curr->next;
-	}
-	err = pthread_create(&curr->id, NULL, &routine, curr);
-		if (err != 0)
-			return (err);
+	if (create_philo_threads(&state) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
 	
 	/**
 	 * Join philosophers threads
 	*/
-	curr = state.head;
-	while (curr->next != state.head)
-	{
-		err = pthread_join(curr->id, NULL);
-		if (err != 0)
-			return (err);
-		curr = curr->next;
-	}
-	err = pthread_join(curr->id, NULL);
-	if (err != 0)
-		return (err);
+	if (join_philo_threads(&state) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
 
 	err = pthread_mutex_destroy(&mutex);
 	if (err != 0)
