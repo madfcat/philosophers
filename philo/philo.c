@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/27 14:29:13 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/27 15:59:39 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,11 +50,10 @@ void	take_forks(t_philo *philo)
 	}
 }
 
-/* void *eat(t_philo *philo)
+void *eat(t_philo *philo)
 {
 	if (philo->state->still_alive && philo->forks_in_use == 2) {
 		gettimeofday(&philo->meal_time, NULL);
-		// printf("philo %d is eating!\n", philo->no);
 		philo->is_thinking = false;
 		print_message(philo, "is eating");
 		if (philo->state->meals_per_philo > 0)
@@ -66,12 +65,32 @@ void	take_forks(t_philo *philo)
 		usleep(philo->state->time_to_eat * 1000);
 		if (!philo->state->meals_left)
 		{
+			pthread_mutex_lock(philo->state->mutex);
 			philo->state->still_alive = false;
+			pthread_mutex_unlock(philo->state->mutex);
 			return (NULL);
 		}
 	}
 	return (philo);
-} */
+}
+
+void	*give_forks_back(t_philo *philo)
+{
+	if (philo->state->still_alive && philo->forks_in_use == 2)
+	{
+		pthread_mutex_lock(philo->mutex);
+		philo->fork_available = true;
+		philo->next->fork_available = true;
+		pthread_mutex_unlock(philo->mutex);
+		philo->forks_in_use -= 2;
+		philo->is_thinking = false;
+		print_message(philo, "is sleeping");
+		usleep(philo->state->time_to_sleep * 1000);
+		if (!philo->state->still_alive)
+			return (NULL);
+	}
+	return (philo);
+}
 
 /**
  * @return NULL on success
@@ -85,7 +104,6 @@ void *routine(void	*arg)
 	philo = (t_philo *)arg;
 	if (gettimeofday(&philo->meal_time, NULL) != EXIT_SUCCESS)
 		return (void *)error;
-
 	while(philo->state->still_alive)
 	{
 		if (philo->state->still_alive && !philo->is_thinking)
@@ -97,30 +115,10 @@ void *routine(void	*arg)
 			return (NULL);
 		// take forks
 		take_forks(philo);
-
 		// eat 
-		// printf("philo %lu is eating!\n", (unsigned long)philo->id);
-		if (philo->state->still_alive && philo->forks_in_use == 2) {
-			gettimeofday(&philo->meal_time, NULL);
-			// printf("philo %d is eating!\n", philo->no);
-			philo->is_thinking = false;
-			print_message(philo, "is eating");
-			if (philo->state->meals_per_philo > 0)
-			{
-				pthread_mutex_lock(philo->state->meal_mutex);
-				philo->state->meals_left -= 1;
-				pthread_mutex_unlock(philo->state->meal_mutex);
-			}
-			usleep(philo->state->time_to_eat * 1000);
-			if (!philo->state->meals_left)
-			{
-				pthread_mutex_lock(philo->state->mutex);
-				philo->state->still_alive = false;
-				pthread_mutex_unlock(philo->state->mutex);
-				return (NULL);
-			}
-		}
-
+		if (!eat(philo))
+			return (NULL);
+		// check death
 		gettimeofday(&philo->state->curr_time, NULL);
 		if (philo->state->still_alive && (gettime_usec(philo->state->curr_time) - gettime_usec(philo->meal_time)) > (unsigned long)(philo->state->time_to_die * 1000))
 		{
@@ -134,21 +132,9 @@ void *routine(void	*arg)
 			}
 			return (NULL);
 		}
-
 		// give forks back
-		if (philo->state->still_alive && philo->forks_in_use == 2)
-		{
-			pthread_mutex_lock(philo->mutex);
-			philo->fork_available = true;
-			philo->next->fork_available = true;
-			pthread_mutex_unlock(philo->mutex);
-			philo->forks_in_use -= 2;
-			philo->is_thinking = false;
-			print_message(philo, "is sleeping");
-			usleep(philo->state->time_to_sleep * 1000);
-			if (!philo->state->still_alive)
-				return (NULL);
-		}
+		if (!give_forks_back(philo))
+			return (NULL);
 	}
 	return (NULL);
 }
