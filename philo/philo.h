@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/26 22:52:48 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/27 20:23:44 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include <pthread.h>
 # include <sys/time.h>
 # include <stdio.h>
+     #include <string.h> // remove me
 
 typedef enum e_bool {
     false = 0,
@@ -36,9 +37,12 @@ typedef struct s_state {
 
 	t_bool			still_alive;
 	t_philo			*head;
+	
 	pthread_mutex_t	*mutex;
 	pthread_mutex_t	*meal_mutex;
-	struct timeval	curr_time;
+	pthread_mutex_t	*curr_mutex;
+
+	// struct timeval	curr_time;
 }	t_state;
 
 // fork_available is a philosopher's left fork 
