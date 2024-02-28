@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/27 21:13:09 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/27 21:26:57 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -133,15 +133,15 @@ void *routine(void	*arg)
 		return (void *)error;
 	while(philo->state->still_alive)
 	{
-		if (!check_death(philo))
-			return (NULL);
+/* 		if (!check_death(philo))
+			return (NULL); */
 		if (philo->state->still_alive && !philo->is_thinking)
 		{
 			print_message(philo, "is thinking");
 			philo->is_thinking = true;
 		}
-		if (!philo->state->still_alive)
-			return (NULL);
+/* 		if (!philo->state->still_alive)
+			return (NULL); */
 		// take forks
 		take_forks(philo);
 		// eat 
@@ -178,6 +178,7 @@ t_philo	*create_philo(int number, pthread_mutex_t *mutex, t_state *state)
 	philo->next = NULL;
 	philo->prev = NULL;
 	philo->fork_available = true;
+	philo->is_thinking = true;
 	philo->forks_in_use = 0;
 	if (gettimeofday(&philo->meal_time, NULL) != EXIT_SUCCESS)
 		return (NULL);
