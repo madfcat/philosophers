@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/27 21:26:57 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/28 18:40:10 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,26 +38,27 @@ int meals_per_philo = 10; */
 
 void	take_forks(t_philo *philo)
 {
+	pthread_mutex_lock(philo->mutex);
 	if (philo->fork_available && philo->next->fork_available && philo->state->still_alive)
 	{
-			pthread_mutex_lock(philo->mutex);
-			philo->fork_available = false;
-			philo->next->fork_available = false;
-			pthread_mutex_unlock(philo->mutex);
-			if (!philo->state->still_alive)
-				return ;
-			print_message(philo, "has taken a fork");
-			if (!philo->state->still_alive)
-				return ;
-			print_message(philo, "has taken a fork");
-			if (!philo->state->still_alive)
-				return ;
+		philo->fork_available = false;
+		philo->next->fork_available = false;
 		philo->forks_in_use += 2;
+		if (!philo->state->still_alive)
+			return ;
+		print_message(philo, "has taken a fork");
+		if (!philo->state->still_alive)
+			return ;
+		print_message(philo, "has taken a fork");
+		if (!philo->state->still_alive)
+			return ;
 	}
+	pthread_mutex_unlock(philo->mutex);
 }
 
 void *eat(t_philo *philo)
 {
+	pthread_mutex_lock(philo->state->meal_mutex);
 	if (philo->state->still_alive && philo->forks_in_use == 2) {
 		gettimeofday(&philo->meal_time, NULL);
 		if (!philo->state->still_alive)
@@ -66,7 +67,6 @@ void *eat(t_philo *philo)
 		print_message(philo, "is eating");
 		if (philo->state->meals_per_philo > 0)
 		{
-			pthread_mutex_lock(philo->state->meal_mutex);
 			philo->state->meals_left -= 1;
 			if (!philo->state->meals_left)
 			{
@@ -74,12 +74,12 @@ void *eat(t_philo *philo)
 				philo->state->still_alive = false;
 				pthread_mutex_unlock(philo->state->mutex);
 			}
-			pthread_mutex_unlock(philo->state->meal_mutex);
 		}
 		if (!philo->state->still_alive)
 			return (NULL);
 		usleep(philo->state->time_to_eat * 1000);
 	}
+	pthread_mutex_unlock(philo->state->meal_mutex);
 	return (philo);
 }
 
@@ -87,6 +87,7 @@ void	*check_death(t_philo *philo)
 {
 	struct timeval curr_time;
 	// pthread_mutex_lock(philo->state->curr_mutex);
+	
 	gettimeofday(&curr_time, NULL);
 	// pthread_mutex_unlock(philo->state->curr_mutex);
 	if (philo->state->still_alive && (gettime_usec(curr_time) - gettime_usec(philo->meal_time)) > (unsigned long)(philo->state->time_to_die * 1000))
@@ -108,8 +109,8 @@ void	*give_forks_back(t_philo *philo)
 		pthread_mutex_lock(philo->mutex);
 		philo->fork_available = true;
 		philo->next->fork_available = true;
-		pthread_mutex_unlock(philo->mutex);
 		philo->forks_in_use -= 2;
+		pthread_mutex_unlock(philo->mutex);
 		philo->is_thinking = false;
 		print_message(philo, "is sleeping");
 		usleep(philo->state->time_to_sleep * 1000);
