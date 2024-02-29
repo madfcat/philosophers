@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/27 20:23:44 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/29 14:36:49 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,8 @@ typedef struct s_state {
 
 	t_bool			still_alive;
 	t_philo			*head;
+
+	struct timeval	start;
 	
 	pthread_mutex_t	*mutex;
 	pthread_mutex_t	*meal_mutex;
@@ -56,16 +58,16 @@ typedef struct s_philo
 	t_bool			fork_available;
 	unsigned char	forks_in_use;
 	struct timeval	meal_time;
-	unsigned int	eat_count;
 	t_bool			is_thinking;
 
-	pthread_mutex_t	*mutex;
+	pthread_mutex_t	fork_mutex;
 	t_state			*state;
 }	t_philo;
 
 unsigned long	gettime_usec(struct timeval time);
+unsigned long	gettime_ms(struct timeval time);
 int				print_message(t_philo *philo, char *msg);
-void			free_philos(t_philo *head);
+int			free_philos(t_philo *head);
 
 int				ft_atoi(const char *str);
 

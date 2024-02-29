@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 01:52:52 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/27 20:19:45 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/02/29 14:38:01 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,11 @@
 unsigned long	gettime_usec(struct timeval time)
 {
 	return (time.tv_sec * 1000000 + time.tv_usec);
+}
+
+unsigned long	gettime_ms(struct timeval time)
+{
+	return (time.tv_sec * 1000000 + time.tv_usec) / 1000;
 }
 
 int	print_message(t_philo *philo, char *msg)
@@ -31,14 +36,16 @@ int	print_message(t_philo *philo, char *msg)
 			return (EXIT_FAILURE);
 	if ((philo->state->still_alive || !strnstr(msg, "died", 0)))
 	{
-		if (printf("%lu %2d %s\n",
-			gettime_usec(curr_time) / 1000, philo->no, msg) < 0)
-			return (EXIT_FAILURE);
+		// if (printf("%lu %2d %s\n",
+		// 	gettime_usec(curr_time) / 1000, philo->no, msg) < 0)
+		// 	return (EXIT_FAILURE);
+		printf("%lu %2d %s\n",
+			gettime_ms(curr_time) - gettime_ms(philo->state->start), philo->no, msg);
 	}
 	return (EXIT_SUCCESS);
 }
 
-void	free_philos(t_philo *head)
+int	free_philos(t_philo *head)
 {
 	t_philo *prev;
 	t_philo *curr;
@@ -46,10 +53,13 @@ void	free_philos(t_philo *head)
 	curr = head;
 	while (curr)
 	{
+		if (pthread_mutex_destroy(&curr->fork_mutex) != EXIT_SUCCESS)
+			return (EXIT_FAILURE);
 		prev = curr;
 		curr = curr->next;
 		free(prev);
 		if (curr == head)
 			break;
 	}
+	return (EXIT_SUCCESS);
 }

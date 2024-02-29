@@ -1,4 +1,5 @@
 Noone should die
+./philo 5 800 200 200
 ./philo 5 800 200 200 7
 
 Noone should die
