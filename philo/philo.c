@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/02 19:28:03 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/02 20:05:19 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,20 +38,22 @@ int meals_per_philo = 10; */
 
 void *state_routine(void *arg)
 {
-	t_state	*state;
-	state = (t_state *)arg;
+	t_state			*state;
+	unsigned long	error;
 	
+	error = EXIT_FAILURE;
+	state = (t_state *)arg;
 	while(state->still_alive)
 	{
-		gettimeofday(&state->curr, NULL);
+		error = gettimeofday(&state->curr_time, NULL);
+		if (error != EXIT_SUCCESS)
+			return (void *)error;
 	}
 	return (NULL);
 }
 
 int	take_forks_eat(t_philo *philo)
 {
-/* 	if (philo->fork_available && philo->next->fork_available)
-	{ */
 	pthread_mutex_t *first_fork;
 	pthread_mutex_t *second_fork;
 	
@@ -68,8 +70,6 @@ int	take_forks_eat(t_philo *philo)
 	}
 
 	pthread_mutex_lock(first_fork);
-		philo->fork_available = false;
-		philo->next->fork_available = false;
 		print_message(philo, "has taken the first fork");
 	pthread_mutex_lock(second_fork);
 		print_message(philo, "has taken the second fork");
@@ -79,13 +79,27 @@ int	take_forks_eat(t_philo *philo)
 			pthread_mutex_unlock(&philo->next->fork_mutex);
 			return (EXIT_PHILO_DEATH);
 		}
+
+/* 		pthread_mutex_lock(philo->state->meal_mutex);
+		if (philo->state->meals_per_philo > 0)
+		{
+			philo->state->meals_left -= 1;
+			printf("meals left: %d\n", philo->state->meals_left);
+		}
+		pthread_mutex_unlock(philo->state->meal_mutex);
+		if (philo->state->meals_per_philo == 0)
+		{
+			pthread_mutex_unlock(&philo->next->fork_mutex);
+			pthread_mutex_unlock(&philo->fork_mutex);
+			return (EXIT_OTHER_DEATH);
+		} */
+
 		print_message(philo, "is eating");
-		philo->meal_time = philo->state->curr;
+		philo->meal_time = philo->state->curr_time;
+
 		if (thread_sleep(philo, philo->state->time_to_eat) == EXIT_PHILO_DEATH)
 			return (EXIT_PHILO_DEATH);
-		philo->next->fork_available = true;
 	pthread_mutex_unlock(&philo->next->fork_mutex);
-		philo->fork_available = true;
 	pthread_mutex_unlock(&philo->fork_mutex);
 /* 	} */
 		print_message(philo, "is sleeping");
@@ -194,6 +208,7 @@ void *routine(void	*arg)
 {
 	t_philo	*philo;
 	unsigned long error;
+	int result;
 
 	error = EXIT_FAILURE;
 	philo = (t_philo *)arg;
@@ -203,11 +218,9 @@ void *routine(void	*arg)
 	{
 		// take forks
 		// printf("philo %d routine\n", philo->no);
-		if (philo->state->still_alive && take_forks_eat(philo) == EXIT_PHILO_DEATH)
-		{
-			// printf("philo died!\n");
+		result = take_forks_eat(philo) == EXIT_PHILO_DEATH;
+		if (philo->state->still_alive && result == EXIT_PHILO_DEATH)
 			return (NULL);
-		}
 		if (!philo->state->still_alive)
 			return (NULL);
 		// eat 
@@ -336,7 +349,7 @@ int	init_state(t_state *state, char const *argv[],
 	state->time_to_die = ft_atoi(argv[2]);
 	state->time_to_eat = ft_atoi(argv[3]);
 	state->time_to_sleep = ft_atoi(argv[4]);
-	gettimeofday(&state->start, NULL);
+	gettimeofday(&state->start_time, NULL);
 	if (!argv[5])
 		state->meals_per_philo = -1;
 	else
@@ -372,18 +385,20 @@ int	main(int argc, char const *argv[])
 	// 	return (EXIT_FAILURE);
 
 	err = pthread_create(&state.id, NULL, &state_routine, &state);
-		if (err != 0)
-			return (err);
+		if (err != EXIT_SUCCESS)
+			return (EXIT_FAILURE);
+
 	if (init_philos(&state) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
 	if (create_philo_threads(&state) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
 	if (join_philo_threads(&state) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
-	// state.still_alive = false;
+
 	err = pthread_join(state.id, NULL);
-		if (err != 0)
-			return (err);
+		if (err != EXIT_SUCCESS)
+			return (EXIT_FAILURE);
+
 	if (pthread_mutex_destroy(&state_mutex) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
 	if (pthread_mutex_destroy(&meal_mutex) != EXIT_SUCCESS)

@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/02 19:16:21 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/02 19:45:23 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,14 +44,12 @@ typedef struct s_state {
 	t_bool			still_alive;
 	t_philo			*head;
 
-	struct timeval	start;
-	struct timeval	curr;
+	struct timeval	start_time;
+	struct timeval	curr_time;
 	
 	pthread_mutex_t	*mutex;
 	pthread_mutex_t	*meal_mutex;
 	pthread_mutex_t	*curr_mutex;
-
-	// struct timeval	curr_time;
 }	t_state;
 
 // fork_available is a philosopher's left fork 
@@ -62,10 +60,7 @@ typedef struct s_philo
 	struct s_philo	*next;
 	struct s_philo	*prev;
 	
-	t_bool			fork_available;
-	// unsigned char	forks_in_use;
 	struct timeval	meal_time;
-	// t_bool			is_thinking;
 
 	pthread_mutex_t	fork_mutex;
 	t_state			*state;
