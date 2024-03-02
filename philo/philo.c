@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/29 16:55:47 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/02 19:15:30 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,37 +36,68 @@ int meals_per_philo = 10; */
 
 #include "philo.h"
 
-void	take_forks(t_philo *philo)
+void *state_routine(void *arg)
 {
-	pthread_mutex_lock(&philo->next->fork_mutex);
-	pthread_mutex_lock(&philo->fork_mutex);
-	if (philo->fork_available && philo->next->fork_available && philo->state->still_alive)
+	t_state	*state;
+	state = (t_state *)arg;
+	
+	while(state->still_alive)
 	{
-		philo->fork_available = false;
-		// print_message(philo, "has taken a fork");
-		print_message(philo, "has taken the left fork");
-		philo->forks_in_use += 1;
+		gettimeofday(&state->curr, NULL);
 	}
-
-	if (!philo->state->still_alive)
-		return ;
-
-	if (philo->forks_in_use == 1 && philo->next->fork_available && philo->state->still_alive)
-	{
-		philo->next->fork_available = false;
-		// print_message(philo, "has taken a fork");
-		print_message(philo, "has taken the right fork");
-		philo->forks_in_use += 1;
-	}
-	pthread_mutex_unlock(&philo->fork_mutex);
-	pthread_mutex_unlock(&philo->next->fork_mutex);
-	if (!philo->state->still_alive)
-		return ;
+	return (NULL);
 }
 
-void *eat(t_philo *philo)
+int	take_forks_eat(t_philo *philo)
 {
-	if (philo->state->still_alive && philo->forks_in_use == 2) {
+/* 	if (philo->fork_available && philo->next->fork_available)
+	{ */
+	pthread_mutex_t *first_fork;
+	pthread_mutex_t *second_fork;
+	
+	// printf("philo %d take\n", philo->no);
+	if (philo->no % 2 == 1)
+	{
+		first_fork = &philo->fork_mutex;
+		second_fork = &philo->next->fork_mutex;
+	}
+	else
+	{
+		first_fork = &philo->next->fork_mutex;
+		second_fork = &philo->fork_mutex;
+	}
+
+	pthread_mutex_lock(first_fork);
+		philo->fork_available = false;
+		philo->next->fork_available = false;
+		print_message(philo, "has taken the first fork");
+	pthread_mutex_lock(second_fork);
+		print_message(philo, "has taken the second fork");
+		if (!philo->state->still_alive)
+		{
+			pthread_mutex_unlock(&philo->fork_mutex);
+			pthread_mutex_unlock(&philo->next->fork_mutex);
+			return (EXIT_PHILO_DEATH);
+		}
+		print_message(philo, "is eating");
+		philo->meal_time = philo->state->curr;
+		thread_sleep(philo, philo->state->time_to_eat);
+		philo->next->fork_available = true;
+	pthread_mutex_unlock(&philo->next->fork_mutex);
+		philo->fork_available = true;
+	pthread_mutex_unlock(&philo->fork_mutex);
+/* 	} */
+		print_message(philo, "is sleeping");
+		if (thread_sleep(philo, philo->state->time_to_sleep) == EXIT_PHILO_DEATH)
+			return (EXIT_PHILO_DEATH);
+		print_message(philo, "is thinking");
+		return (EXIT_SUCCESS);
+}
+
+/* void *eat(t_philo *philo)
+{
+	if (philo->state->still_alive && philo->forks_in_use == 2)
+	{
 		gettimeofday(&philo->meal_time, NULL);
 		if (!philo->state->still_alive)
 			return (NULL);
@@ -74,7 +105,6 @@ void *eat(t_philo *philo)
 		if (philo->state->meals_per_philo > 0)
 		{
 			philo->state->meals_left -= 1;
-			// printf("meals left: %d\n", philo->state->meals_left);
 			if (!philo->state->meals_left)
 			{
 				pthread_mutex_lock(philo->state->mutex);
@@ -106,35 +136,34 @@ void *eat(t_philo *philo)
 			if (!philo->state->still_alive)
 				return (NULL);
 		}
-		
 	}
 	return (philo);
-}
+} */
 
-void	*check_death(t_philo *philo)
-{
-	struct timeval curr_time;
-	// pthread_mutex_lock(philo->state->curr_mutex);
+// void	*check_death(t_philo *philo)
+// {
+// 	struct timeval curr_time;
+// 	// pthread_mutex_lock(philo->state->curr_mutex);
 	
-	gettimeofday(&curr_time, NULL);
-	// pthread_mutex_unlock(philo->state->curr_mutex);
-/* 	printf("%d: curr_time: %ld\n", philo->no, gettime_ms(curr_time));
-	printf("%d: meal_time: %ld\n", philo->no, gettime_ms(philo->meal_time));
-	printf("%d: passed: %ld\n", philo->no, gettime_ms(curr_time) - gettime_ms(philo->meal_time));
-	printf("time to die: %d\n",philo->state->time_to_die); */
-	if (philo->state->still_alive && (gettime_ms(curr_time) - gettime_ms(philo->meal_time)) > (unsigned long)(philo->state->time_to_die))
-	{
-		philo->is_thinking = false;
-		pthread_mutex_lock(philo->state->mutex);
-			philo->state->still_alive = false;
-			print_message(philo, "died");
-		pthread_mutex_unlock(philo->state->mutex);
-		return (NULL);
-	}
-	return (philo);
-}
+// 	gettimeofday(&curr_time, NULL);
+// 	// pthread_mutex_unlock(philo->state->curr_mutex);
+// /* 	printf("%d: curr_time: %ld\n", philo->no, gettime_ms(curr_time));
+// 	printf("%d: meal_time: %ld\n", philo->no, gettime_ms(philo->meal_time));
+// 	printf("%d: passed: %ld\n", philo->no, gettime_ms(curr_time) - gettime_ms(philo->meal_time));
+// 	printf("time to die: %d\n",philo->state->time_to_die); */
+// 	if (philo->state->still_alive && (gettime_ms(curr_time) - gettime_ms(philo->meal_time)) > (unsigned long)(philo->state->time_to_die))
+// 	{
+// 		philo->is_thinking = false;
+// 		pthread_mutex_lock(philo->state->mutex);
+// 			philo->state->still_alive = false;
+// 			print_message(philo, "died");
+// 		pthread_mutex_unlock(philo->state->mutex);
+// 		return (NULL);
+// 	}
+// 	return (philo);
+// }
 
-void	*give_forks_back(t_philo *philo)
+/* void	*give_forks_back(t_philo *philo)
 {
 	if (philo->state->still_alive && philo->forks_in_use == 2)
 	{
@@ -155,7 +184,7 @@ void	*give_forks_back(t_philo *philo)
 			return (NULL);
 	}
 	return (philo);
-}
+} */
 
 /**
  * @return NULL on success
@@ -172,18 +201,25 @@ void *routine(void	*arg)
 	while(philo->state->still_alive)
 	{
 		// take forks
-		take_forks(philo);
-		// eat 
-		if (!eat(philo))
+		// printf("philo %d routine\n", philo->no);
+		if (take_forks_eat(philo) == EXIT_PHILO_DEATH)
+		{
+			printf("philo died!\n");
 			return (NULL);
+		}
+		if (!philo->state->still_alive)
+			return (NULL);
+		// eat 
+/* 		if (!eat(philo))
+			return (NULL); */
 /* 		if (!philo->is_thinking)
 		{
 			print_message(philo, "is thinking");
 			philo->is_thinking = true;
 		} */
 		// check death
-		if (!check_death(philo))
-			return (NULL);
+/* 		if (!check_death(philo))
+			return (NULL); */
 		// give forks back
 /* 		if (!give_forks_back(philo))
 			return (NULL); */
@@ -212,9 +248,9 @@ t_philo	*create_philo(int number, t_state *state)
 	philo->no = number;
 	philo->next = NULL;
 	philo->prev = NULL;
-	philo->fork_available = true;
-	philo->is_thinking = true;
-	philo->forks_in_use = 0;
+	// philo->fork_available = true;
+	// philo->is_thinking = true;
+	// philo->forks_in_use = 0;
 /*  	if (number == 1)
 	{
 		philo->fork_available = false;
@@ -320,25 +356,38 @@ int	main(int argc, char const *argv[])
 	// pthread_mutex_t mutex;
 	pthread_mutex_t state_mutex;
 	pthread_mutex_t meal_mutex;
-	// pthread_mutex_t curr_mutex;
+	pthread_mutex_t curr_mutex;
 	t_state			state;
+	int				err;
 
 	if (argc < 5 || argc > 6)
 		return (EXIT_FAILURE);
 	if (init_state(&state, argv, &state_mutex, &meal_mutex) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
-	// state.curr_mutex = &curr_mutex;
+	state.curr_mutex = &curr_mutex;
+	if (pthread_mutex_init(&curr_mutex, NULL) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
 	// if (pthread_mutex_init(&mutex, NULL) != EXIT_SUCCESS)
 	// 	return (EXIT_FAILURE);
+
+	err = pthread_create(&state.id, NULL, &state_routine, &state);
+		if (err != 0)
+			return (err);
 	if (init_philos(&state) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
 	if (create_philo_threads(&state) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
 	if (join_philo_threads(&state) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
+	// state.still_alive = false;
+	err = pthread_join(state.id, NULL);
+		if (err != 0)
+			return (err);
 	if (pthread_mutex_destroy(&state_mutex) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
 	if (pthread_mutex_destroy(&meal_mutex) != EXIT_SUCCESS)
+		return (EXIT_FAILURE);
+	if (pthread_mutex_destroy(&curr_mutex) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
 	if (free_philos(state.head) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);

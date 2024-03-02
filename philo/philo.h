@@ -6,13 +6,18 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/02/29 14:36:49 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/02 19:16:21 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef PHILO_H
 # define PHILO_H
-
+# ifndef EXIT_PHILO_DETH
+#  define EXIT_PHILO_DEATH -1
+# endif
+# ifndef EXIT_OTHER_DEATH
+#  define EXIT_OTHER_DEATH -2
+# endif
 # include <unistd.h>
 # include <stdlib.h>
 # include <pthread.h>
@@ -28,6 +33,7 @@ typedef enum e_bool {
 typedef struct s_philo t_philo;
 
 typedef struct s_state {
+	pthread_t		id;
 	int	number_of_philosophers;
 	int	time_to_die;
 	int	time_to_eat;
@@ -39,6 +45,7 @@ typedef struct s_state {
 	t_philo			*head;
 
 	struct timeval	start;
+	struct timeval	curr;
 	
 	pthread_mutex_t	*mutex;
 	pthread_mutex_t	*meal_mutex;
@@ -56,9 +63,9 @@ typedef struct s_philo
 	struct s_philo	*prev;
 	
 	t_bool			fork_available;
-	unsigned char	forks_in_use;
+	// unsigned char	forks_in_use;
 	struct timeval	meal_time;
-	t_bool			is_thinking;
+	// t_bool			is_thinking;
 
 	pthread_mutex_t	fork_mutex;
 	t_state			*state;
@@ -67,7 +74,9 @@ typedef struct s_philo
 unsigned long	gettime_usec(struct timeval time);
 unsigned long	gettime_ms(struct timeval time);
 int				print_message(t_philo *philo, char *msg);
-int			free_philos(t_philo *head);
+int				free_philos(t_philo *head);
+
+int				thread_sleep(t_philo *philo, int ms);
 
 int				ft_atoi(const char *str);
 
