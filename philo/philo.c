@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/02 19:15:30 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/02 19:28:03 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,8 @@ int	take_forks_eat(t_philo *philo)
 		}
 		print_message(philo, "is eating");
 		philo->meal_time = philo->state->curr;
-		thread_sleep(philo, philo->state->time_to_eat);
+		if (thread_sleep(philo, philo->state->time_to_eat) == EXIT_PHILO_DEATH)
+			return (EXIT_PHILO_DEATH);
 		philo->next->fork_available = true;
 	pthread_mutex_unlock(&philo->next->fork_mutex);
 		philo->fork_available = true;
@@ -202,9 +203,9 @@ void *routine(void	*arg)
 	{
 		// take forks
 		// printf("philo %d routine\n", philo->no);
-		if (take_forks_eat(philo) == EXIT_PHILO_DEATH)
+		if (philo->state->still_alive && take_forks_eat(philo) == EXIT_PHILO_DEATH)
 		{
-			printf("philo died!\n");
+			// printf("philo died!\n");
 			return (NULL);
 		}
 		if (!philo->state->still_alive)

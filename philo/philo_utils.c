@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 01:52:52 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/02 19:15:46 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/02 19:25:44 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ int	print_message(t_philo *philo, char *msg)
 		pthread_mutex_unlock(philo->state->curr_mutex); */
 /* 	if (time != EXIT_SUCCESS)
 			return (EXIT_FAILURE); */
+	if (philo->state->still_alive)
 		printf("%6lu %2d %s\n",
 			gettime_ms(philo->state->curr) - gettime_ms(philo->state->start), philo->no, msg);
 /* 	if ((philo->state->still_alive || !strnstr(msg, "died", 0)))
@@ -77,9 +78,14 @@ int	thread_sleep(t_philo *philo, int ms)
 	while (sleeping_time < (unsigned long)ms)
 	// while (gettime_ms(philo->state->curr) - (gettime_ms(start)) < (unsigned long)philo->state->time_to_sleep)
 	{
+		if (!philo->state->still_alive)
+		{
+			return (EXIT_OTHER_DEATH);
+		}
 		if (gettime_ms(philo->state->curr) - gettime_ms(philo->meal_time) > (unsigned long)philo->state->time_to_die)
 		{
-			print_message(philo, "died");
+			if (philo->state->still_alive)
+				print_message(philo, "died");
 			philo->state->still_alive = false;
 			return (EXIT_PHILO_DEATH);
 		}
