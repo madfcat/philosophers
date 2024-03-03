@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/02 19:45:23 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/03 16:15:58 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,12 @@ typedef enum e_bool {
     true = 1
 }	t_bool;
 
+typedef enum e_status {
+    thinking = 1,
+    eating = 2,
+	sleeping = 3
+}	t_status;
+
 typedef struct s_philo t_philo;
 
 typedef struct s_state {
@@ -45,7 +51,7 @@ typedef struct s_state {
 	t_philo			*head;
 
 	struct timeval	start_time;
-	struct timeval	curr_time;
+	// struct timeval	curr_time;
 	
 	pthread_mutex_t	*mutex;
 	pthread_mutex_t	*meal_mutex;
@@ -61,6 +67,8 @@ typedef struct s_philo
 	struct s_philo	*prev;
 	
 	struct timeval	meal_time;
+
+	t_status		status;
 
 	pthread_mutex_t	fork_mutex;
 	t_state			*state;
