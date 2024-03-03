@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/03 16:15:58 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/03 22:18:54 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,12 +40,12 @@ typedef struct s_philo t_philo;
 
 typedef struct s_state {
 	pthread_t		id;
-	int	number_of_philosophers;
-	int	time_to_die;
-	int	time_to_eat;
-	int	time_to_sleep;
-	int meals_per_philo;
-	int meals_left;
+	int				number_of_philosophers;
+	int				time_to_die;
+	int				time_to_eat;
+	int				time_to_sleep;
+	int 			meals_per_philo;
+	int 			meals_left;
 
 	t_bool			still_alive;
 	t_philo			*head;
@@ -53,7 +53,7 @@ typedef struct s_state {
 	struct timeval	start_time;
 	// struct timeval	curr_time;
 	
-	pthread_mutex_t	*mutex;
+	pthread_mutex_t	*death_mutex;
 	pthread_mutex_t	*meal_mutex;
 	pthread_mutex_t	*curr_mutex;
 }	t_state;
@@ -69,8 +69,12 @@ typedef struct s_philo
 	struct timeval	meal_time;
 
 	t_status		status;
+	t_bool			fork_available;
+
 
 	pthread_mutex_t	fork_mutex;
+	pthread_mutex_t	status_mutex;
+	pthread_mutex_t	fork_available_mutex;
 	t_state			*state;
 }	t_philo;
 
@@ -80,6 +84,8 @@ int				print_message(t_philo *philo, char *msg);
 int				free_philos(t_philo *head);
 
 int				thread_sleep(t_philo *philo, int ms);
+
+t_bool			check_alive(t_philo *philo);
 
 int				ft_atoi(const char *str);
 

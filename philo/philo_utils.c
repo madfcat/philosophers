@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 01:52:52 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/03 16:21:53 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/03 22:37:34 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,8 +30,8 @@ int	print_message(t_philo *philo, char *msg)
 
 	err = gettimeofday(&curr_time, NULL);
 		if (err != EXIT_SUCCESS)
-			return (1);
-	if (philo->state->still_alive)
+			return (EXIT_FAILURE);
+	if (check_alive(philo))
 		printf("%6lu %2d %s\n",
 			gettime_ms(curr_time) - gettime_ms(philo->state->start_time), philo->no, msg);
 	return (EXIT_SUCCESS);
@@ -46,6 +46,10 @@ int	free_philos(t_philo *head)
 	while (curr)
 	{
 		if (pthread_mutex_destroy(&curr->fork_mutex) != EXIT_SUCCESS)
+			return (EXIT_FAILURE);
+		if (pthread_mutex_destroy(&curr->status_mutex) != EXIT_SUCCESS)
+			return (EXIT_FAILURE);
+		if (pthread_mutex_destroy(&curr->fork_available_mutex) != EXIT_SUCCESS)
 			return (EXIT_FAILURE);
 		prev = curr;
 		curr = curr->next;
@@ -76,15 +80,19 @@ int	thread_sleep(t_philo *philo, int ms)
 	while (sleeping_time < (unsigned long)ms)
 	// while (gettime_ms(philo->state->curr_time) - (gettime_ms(start)) < (unsigned long)philo->state->time_to_sleep)
 	{
-		if (!philo->state->still_alive)
+/* 		if (!check_alive(philo))
 		{
 			return (EXIT_OTHER_DEATH);
-		}
+		} */
 		if (gettime_ms(curr_time) - gettime_ms(philo->meal_time) > (unsigned long)philo->state->time_to_die)
 		{
-			if (philo->state->still_alive)
+			if (check_alive(philo))
 				print_message(philo, "died");
+			pthread_mutex_lock(philo->state->death_mutex);
 			philo->state->still_alive = false;
+			pthread_mutex_unlock(philo->state->death_mutex);
+
+			
 			return (EXIT_PHILO_DEATH);
 		}
 /* 		if (philo->no == 1)
