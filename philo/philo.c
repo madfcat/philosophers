@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/12 20:20:59 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/13 00:35:30 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,12 +36,15 @@ int meals_per_philo = 10; */
 
 #include "philo.h"
 
-t_bool check_alive(t_philo *philo)
+/**
+ * @return 0 if noone died, otherwise, should return philo number
+*/
+int check_alive(t_philo *philo)
 {
 	int result;
 
 	pthread_mutex_lock(philo->state->death_mutex);
-	result = philo->state->still_alive;
+	result = philo->state->died_first;
 	pthread_mutex_unlock(philo->state->death_mutex);
 	// result = philo->state->alive[philo->no - 1];
 	return (result);
@@ -65,7 +68,38 @@ t_bool	check_fork(t_philo *philo)
 	result = philo->fork_available;
 	pthread_mutex_unlock(&philo->fork_mutex);
 	return (result);
-} 
+}
+
+int check_meal(t_philo *philo)
+{
+	int result;
+
+	pthread_mutex_lock(philo->state->meal_mutex);
+	result = philo->state->meals_left;
+	pthread_mutex_unlock(philo->state->meal_mutex);
+	// result = philo->state->alive[philo->no - 1];
+	return (result);
+}
+
+int	handle_meals(t_philo *philo)
+{
+	pthread_mutex_lock(philo->state->meal_mutex);
+		if (philo->state->meals_left > 0
+			&& philo->meals_count != philo->state->meals_per_philo)
+			philo->state->meals_left -= 1;
+		else if (philo->state->meals_left == 0)
+		{
+			pthread_mutex_lock(philo->state->death_mutex);
+				// philo->state->died_first = -1;
+				philo->state->died_first = philo->no;
+			pthread_mutex_unlock(philo->state->death_mutex);
+			pthread_mutex_unlock(philo->state->meal_mutex);
+			return (EXIT_PHILO_DEATH);
+		}
+	pthread_mutex_unlock(philo->state->meal_mutex);
+	philo->meals_count += 1;
+	return (EXIT_SUCCESS);
+}
 
 int	eat(t_philo *philo)
 {
@@ -78,12 +112,14 @@ int	eat(t_philo *philo)
 	philo->meal_time = curr_time;
 
 	print_message(philo, "is eating");
+	if (philo->state->meals_per_philo > -1 && handle_meals(philo) == EXIT_PHILO_DEATH)
+		return (EXIT_PHILO_DEATH);
 	if (thread_sleep(philo, philo->state->time_to_eat) == EXIT_PHILO_DEATH)
 	{
 		pthread_mutex_lock(philo->state->death_mutex);
-		philo->state->still_alive = false;
+		if (philo->state->died_first == 0)
+			philo->state->died_first = philo->no;
 		pthread_mutex_unlock(philo->state->death_mutex);
-		// philo->state->alive[philo->no - 1] = false;
 
 		pthread_mutex_lock(&philo->next->fork_mutex);
 			philo->next->fork_available = true;
@@ -92,7 +128,7 @@ int	eat(t_philo *philo)
 		pthread_mutex_lock(&philo->fork_mutex);
 			philo->fork_available = true;
 		pthread_mutex_unlock(&philo->fork_mutex);
-			return (EXIT_PHILO_DEATH);
+		return (EXIT_PHILO_DEATH);
 	}
 	return (EXIT_SUCCESS);
 }
@@ -150,11 +186,8 @@ int	take_forks_eat(t_philo *philo)
 
 	// eating
 	if (eat(philo) == EXIT_PHILO_DEATH)
-	{
-		// pthread_mutex_unlock(&philo->next->fork_mutex);
 		return (EXIT_PHILO_DEATH);
-	}
-	
+
 	forks_back(philo);
 	
 	print_message(philo, "is sleeping");
@@ -187,7 +220,7 @@ void *routine(void	*arg)
 		return (void *)error;
 	if (gettimeofday(&philo->meal_time, NULL) != EXIT_SUCCESS)
 		return (void *)error;
-	while(check_alive(philo))
+	while(check_alive(philo) == 0)
 	{
 		result = take_forks_eat(philo);
 		if (result == EXIT_PHILO_DEATH)
@@ -223,6 +256,7 @@ t_philo	*create_philo(int number, t_state *state)
 	philo->prev = NULL;
 	philo->status = thinking;
 	philo->fork_available = true;
+	philo->meals_count = 0;
 	// state->alive[number - 1] = true;
 	// philo->is_thinking = true;
 	// philo->forks_in_use = 0;
@@ -318,11 +352,13 @@ int	init_state(t_state *state, char const *argv[],
 	else
 		state->meals_per_philo = ft_atoi(argv[5]);
 	state->meals_left = ft_atoi(argv[1]) * state->meals_per_philo;
+	if (state->meals_left == 0)
+		return (EXIT_FAILURE);
 	if (pthread_mutex_init(state_mutex, NULL) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
 	if (pthread_mutex_init(meal_mutex, NULL) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
-	state->still_alive = true;
+	state->died_first = 0;
 	// state->alive = malloc((state->number_of_philosophers) * sizeof(t_bool));
 	state->death_mutex = state_mutex;
 	state->meal_mutex = meal_mutex;

@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 01:52:52 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/12 20:16:40 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/13 00:36:27 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,12 +23,30 @@ unsigned long	gettime_ms(struct timeval time)
 	return (time.tv_sec * 1000000 + time.tv_usec) / 1000;
 }
 
+/**
+ * The condiition helps to determine if other philos are alive or current
+ * philo is the first to die because check_alive returns the first philo to die
+ * or 0 in case of everybody is alive.
+*/
 int	print_message(t_philo *philo, char *msg)
 {
 	struct timeval	curr_time;
 	int 			err;
+	int				meal_cond;
+	int				cond;
 
-	if (check_alive(philo) || philo->died_first)
+	cond = check_alive(philo);
+	meal_cond = true;
+	if (philo->state->meals_per_philo > 0)
+	{
+		meal_cond = check_meal(philo) > 0;
+	}
+	// pthread_mutex_lock(philo->state->meal_mutex);
+	// printf("1. philo %d: meals left: %d\n", philo->no, philo->state->meals_left);
+	// pthread_mutex_unlock(philo->state->meal_mutex);
+	
+	if ((cond == 0 || cond == philo->no) && meal_cond)
+	// if ((cond == 0 || cond == philo->no))
 	{
 		err = gettimeofday(&curr_time, NULL);
 		if (err != EXIT_SUCCESS)
@@ -36,6 +54,9 @@ int	print_message(t_philo *philo, char *msg)
 		printf("%6lu %2d %s\n",
 			gettime_ms(curr_time) - gettime_ms(philo->state->start_time), philo->no, msg);
 	}
+	// pthread_mutex_lock(philo->state->meal_mutex);
+	// printf("2. philo %d: meals left: %d\n", philo->no, philo->state->meals_left);
+	// pthread_mutex_unlock(philo->state->meal_mutex);
 	return (EXIT_SUCCESS);
 }
 
@@ -79,18 +100,15 @@ int	thread_sleep(t_philo *philo, int ms)
 	sleeping_time = gettime_ms(curr_time) - gettime_ms(start);
 	while (sleeping_time < (unsigned long)ms)
 	{
-		// if (philo->no == 1)
-			// printf("philo %d has no meal for: %lu\n", philo->no, gettime_ms(curr_time) - gettime_ms(philo->meal_time));
 		if (gettime_ms(curr_time) - gettime_ms(philo->meal_time) > (unsigned long)philo->state->time_to_die)
 		{
-			// if (philo->state->still_alive)
-			if (check_alive(philo))
+			if (check_alive(philo) == 0)
 			{
-				print_message(philo, "died");
 				pthread_mutex_lock(philo->state->death_mutex);
-					philo->state->still_alive = false;
+				if (philo->state->died_first == 0)
+					philo->state->died_first = philo->no;
 				pthread_mutex_unlock(philo->state->death_mutex);	
-				// philo->state->alive[philo->no - 1] = false;
+				print_message(philo, "died");
 			}
 			return (EXIT_PHILO_DEATH);
 		}
@@ -110,7 +128,6 @@ int	thread_sleep_usec(t_philo *philo, int usec)
 	unsigned long	sleeping_time;
 	int err;
 	
-	// start = philo->state->curr_time;
 	err = gettimeofday(&start, NULL);
 		if (err != EXIT_SUCCESS)
 			return (1);
@@ -120,21 +137,15 @@ int	thread_sleep_usec(t_philo *philo, int usec)
 	sleeping_time = gettime_usec(curr_time) - gettime_usec(start);
 	while (sleeping_time < (unsigned long)usec)
 	{
-			// printf("philo %d has no meal for: %lu\n", philo->no, gettime_ms(curr_time) - gettime_ms(philo->meal_time));
-	
 		if (gettime_ms(curr_time) - gettime_ms(philo->meal_time) > (unsigned long)philo->state->time_to_die)
 		{
-			if (check_alive(philo))
+			if (check_alive(philo) == 0)
 			{
-				print_message(philo, "died");
 				pthread_mutex_lock(philo->state->death_mutex);
-				philo->state->still_alive = false;
+				if (philo->state->died_first == 0)
+					philo->state->died_first = philo->no;
 				pthread_mutex_unlock(philo->state->death_mutex);
-				
-/* 				pthread_mutex_lock(philo->state->death_mutex);
-				printf("philo %d still_alive: %d\n", philo->no, philo->state->still_alive);
-				pthread_mutex_unlock(philo->state->death_mutex); */
-				// philo->state->alive[philo->no - 1] = false;
+				print_message(philo, "died");
 			}
 
 			return (EXIT_PHILO_DEATH);

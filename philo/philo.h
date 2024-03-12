@@ -6,10 +6,12 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/12 20:21:21 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/12 23:14:45 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+
+// might need to remove EXIT_OTHER_DEATH
 #ifndef PHILO_H
 # define PHILO_H
 # ifndef EXIT_PHILO_DETH
@@ -47,8 +49,8 @@ typedef struct s_state {
 	int 			meals_per_philo;
 	int 			meals_left;
 
-	t_bool			still_alive;
-	t_bool			*alive;
+	int				died_first;
+	// t_bool			*alive;
 	
 	t_philo			*head;
 
@@ -57,7 +59,7 @@ typedef struct s_state {
 	
 	pthread_mutex_t	*death_mutex;
 	pthread_mutex_t	*meal_mutex;
-	pthread_mutex_t	*curr_mutex;
+	pthread_mutex_t	*curr_mutex; // not used
 }	t_state;
 
 // fork_available is a philosopher's left fork 
@@ -70,6 +72,8 @@ typedef struct s_philo
 	
 	// struct timeval	start_time;
 	struct timeval	meal_time;
+
+	int				meals_count;
 
 	t_status		status;
 	t_bool			fork_available;
@@ -89,7 +93,8 @@ int				free_philos(t_philo *head);
 int				thread_sleep(t_philo *philo, int ms);
 int				thread_sleep_usec(t_philo *philo, int usec);
 
-t_bool			check_alive(t_philo *philo);
+int				check_alive(t_philo *philo);
+int				check_meal(t_philo *philo);
 
 int				ft_atoi(const char *str);
 
