@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/03 22:18:54 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/12 20:21:21 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,13 +26,13 @@
      #include <string.h> // remove me
 
 typedef enum e_bool {
-    false = 0,
-    true = 1
+	false = 0,
+	true = 1
 }	t_bool;
 
 typedef enum e_status {
-    thinking = 1,
-    eating = 2,
+	thinking = 1,
+	eating = 2,
 	sleeping = 3
 }	t_status;
 
@@ -48,6 +48,8 @@ typedef struct s_state {
 	int 			meals_left;
 
 	t_bool			still_alive;
+	t_bool			*alive;
+	
 	t_philo			*head;
 
 	struct timeval	start_time;
@@ -66,15 +68,16 @@ typedef struct s_philo
 	struct s_philo	*next;
 	struct s_philo	*prev;
 	
+	// struct timeval	start_time;
 	struct timeval	meal_time;
 
 	t_status		status;
 	t_bool			fork_available;
-
+	// t_bool			start;
 
 	pthread_mutex_t	fork_mutex;
 	pthread_mutex_t	status_mutex;
-	pthread_mutex_t	fork_available_mutex;
+	// pthread_mutex_t	fork_available_mutex;
 	t_state			*state;
 }	t_philo;
 
@@ -84,6 +87,7 @@ int				print_message(t_philo *philo, char *msg);
 int				free_philos(t_philo *head);
 
 int				thread_sleep(t_philo *philo, int ms);
+int				thread_sleep_usec(t_philo *philo, int usec);
 
 t_bool			check_alive(t_philo *philo);
 

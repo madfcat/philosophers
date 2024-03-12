@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 01:52:52 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/03 22:37:34 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/12 20:16:40 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,12 +28,14 @@ int	print_message(t_philo *philo, char *msg)
 	struct timeval	curr_time;
 	int 			err;
 
-	err = gettimeofday(&curr_time, NULL);
+	if (check_alive(philo) || philo->died_first)
+	{
+		err = gettimeofday(&curr_time, NULL);
 		if (err != EXIT_SUCCESS)
 			return (EXIT_FAILURE);
-	if (check_alive(philo))
 		printf("%6lu %2d %s\n",
 			gettime_ms(curr_time) - gettime_ms(philo->state->start_time), philo->no, msg);
+	}
 	return (EXIT_SUCCESS);
 }
 
@@ -49,8 +51,8 @@ int	free_philos(t_philo *head)
 			return (EXIT_FAILURE);
 		if (pthread_mutex_destroy(&curr->status_mutex) != EXIT_SUCCESS)
 			return (EXIT_FAILURE);
-		if (pthread_mutex_destroy(&curr->fork_available_mutex) != EXIT_SUCCESS)
-			return (EXIT_FAILURE);
+		// if (pthread_mutex_destroy(&curr->fork_available_mutex) != EXIT_SUCCESS)
+		// 	return (EXIT_FAILURE);
 		prev = curr;
 		curr = curr->next;
 		free(prev);
@@ -67,6 +69,47 @@ int	thread_sleep(t_philo *philo, int ms)
 	unsigned long	sleeping_time;
 	int err;
 	
+	err = gettimeofday(&start, NULL);
+		if (err != EXIT_SUCCESS)
+			return (1);
+	err = gettimeofday(&curr_time, NULL);
+		if (err != EXIT_SUCCESS)
+			return (1);
+	start = curr_time;
+	sleeping_time = gettime_ms(curr_time) - gettime_ms(start);
+	while (sleeping_time < (unsigned long)ms)
+	{
+		// if (philo->no == 1)
+			// printf("philo %d has no meal for: %lu\n", philo->no, gettime_ms(curr_time) - gettime_ms(philo->meal_time));
+		if (gettime_ms(curr_time) - gettime_ms(philo->meal_time) > (unsigned long)philo->state->time_to_die)
+		{
+			// if (philo->state->still_alive)
+			if (check_alive(philo))
+			{
+				print_message(philo, "died");
+				pthread_mutex_lock(philo->state->death_mutex);
+					philo->state->still_alive = false;
+				pthread_mutex_unlock(philo->state->death_mutex);	
+				// philo->state->alive[philo->no - 1] = false;
+			}
+			return (EXIT_PHILO_DEATH);
+		}
+		usleep(500);
+		err = gettimeofday(&curr_time, NULL);
+		if (err != EXIT_SUCCESS)
+			return (EXIT_FAILURE);
+		sleeping_time = gettime_ms(curr_time) - gettime_ms(start);
+	}
+	return (EXIT_SUCCESS);
+}
+
+int	thread_sleep_usec(t_philo *philo, int usec)
+{
+	struct timeval	start;
+	struct timeval	curr_time;
+	unsigned long	sleeping_time;
+	int err;
+	
 	// start = philo->state->curr_time;
 	err = gettimeofday(&start, NULL);
 		if (err != EXIT_SUCCESS)
@@ -74,36 +117,33 @@ int	thread_sleep(t_philo *philo, int ms)
 	err = gettimeofday(&curr_time, NULL);
 		if (err != EXIT_SUCCESS)
 			return (1);
-	// while (gettime_usec(philo->state->curr_time) - (gettime_usec(start)) < (unsigned long)ms * 1000)
-	// sleeping_time = gettime_ms(philo->state->curr_time) - gettime_ms(start);
-	sleeping_time = gettime_ms(curr_time) - gettime_ms(start);
-	while (sleeping_time < (unsigned long)ms)
-	// while (gettime_ms(philo->state->curr_time) - (gettime_ms(start)) < (unsigned long)philo->state->time_to_sleep)
+	sleeping_time = gettime_usec(curr_time) - gettime_usec(start);
+	while (sleeping_time < (unsigned long)usec)
 	{
-/* 		if (!check_alive(philo))
-		{
-			return (EXIT_OTHER_DEATH);
-		} */
+			// printf("philo %d has no meal for: %lu\n", philo->no, gettime_ms(curr_time) - gettime_ms(philo->meal_time));
+	
 		if (gettime_ms(curr_time) - gettime_ms(philo->meal_time) > (unsigned long)philo->state->time_to_die)
 		{
 			if (check_alive(philo))
+			{
 				print_message(philo, "died");
-			pthread_mutex_lock(philo->state->death_mutex);
-			philo->state->still_alive = false;
-			pthread_mutex_unlock(philo->state->death_mutex);
+				pthread_mutex_lock(philo->state->death_mutex);
+				philo->state->still_alive = false;
+				pthread_mutex_unlock(philo->state->death_mutex);
+				
+/* 				pthread_mutex_lock(philo->state->death_mutex);
+				printf("philo %d still_alive: %d\n", philo->no, philo->state->still_alive);
+				pthread_mutex_unlock(philo->state->death_mutex); */
+				// philo->state->alive[philo->no - 1] = false;
+			}
 
-			
 			return (EXIT_PHILO_DEATH);
 		}
-/* 		if (philo->no == 1)
-		{
-			printf("curr: %lu, meal: %lu\n", gettime_ms(curr_time), gettime_ms(philo->meal_time));
-		} */
 		usleep(100);
 		err = gettimeofday(&curr_time, NULL);
 		if (err != EXIT_SUCCESS)
 			return (EXIT_FAILURE);
-		sleeping_time = gettime_ms(curr_time) - gettime_ms(start);
+		sleeping_time = gettime_usec(curr_time) - gettime_usec(start);
 	}
 	return (EXIT_SUCCESS);
 }
