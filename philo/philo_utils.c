@@ -6,12 +6,22 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 01:52:52 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/13 00:36:27 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 00:37:40 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
+int	check_arg(const char *str)
+{
+	char	*converted;
+	int		result;
+
+	converted = ft_itoa(ft_atoi(str));
+	result = ft_strncmp(str, converted, ft_strlen(str) + 1);
+	free(converted);
+	return (result);
+}
 
 unsigned long	gettime_usec(struct timeval time)
 {
@@ -89,34 +99,43 @@ int	thread_sleep(t_philo *philo, int ms)
 	struct timeval	curr_time;
 	unsigned long	sleeping_time;
 	int err;
+
+
+	unsigned long	start_ms;
+	unsigned long	meal_ms;
+
 	
-	err = gettimeofday(&start, NULL);
-		if (err != EXIT_SUCCESS)
-			return (1);
+	// err = gettimeofday(&start, NULL);
+	// 	if (err != EXIT_SUCCESS)
+	// 		return (1);
 	err = gettimeofday(&curr_time, NULL);
 		if (err != EXIT_SUCCESS)
 			return (1);
 	start = curr_time;
-	sleeping_time = gettime_ms(curr_time) - gettime_ms(start);
+
+	start_ms = gettime_ms(start);
+	meal_ms = gettime_ms(philo->meal_time);
+	
+	sleeping_time = gettime_ms(curr_time) - start_ms;
 	while (sleeping_time < (unsigned long)ms)
 	{
-		if (gettime_ms(curr_time) - gettime_ms(philo->meal_time) > (unsigned long)philo->state->time_to_die)
+		if (gettime_ms(curr_time) - meal_ms > (unsigned long)philo->state->time_to_die)
 		{
-			if (check_alive(philo) == 0)
-			{
+			// if (check_alive(philo) == 0)
+			// {
 				pthread_mutex_lock(philo->state->death_mutex);
 				if (philo->state->died_first == 0)
 					philo->state->died_first = philo->no;
 				pthread_mutex_unlock(philo->state->death_mutex);	
 				print_message(philo, "died");
-			}
+			// }
 			return (EXIT_PHILO_DEATH);
 		}
 		usleep(500);
 		err = gettimeofday(&curr_time, NULL);
 		if (err != EXIT_SUCCESS)
 			return (EXIT_FAILURE);
-		sleeping_time = gettime_ms(curr_time) - gettime_ms(start);
+		sleeping_time = gettime_ms(curr_time) - start_ms;
 	}
 	return (EXIT_SUCCESS);
 }
@@ -139,14 +158,14 @@ int	thread_sleep_usec(t_philo *philo, int usec)
 	{
 		if (gettime_ms(curr_time) - gettime_ms(philo->meal_time) > (unsigned long)philo->state->time_to_die)
 		{
-			if (check_alive(philo) == 0)
-			{
+			// if (check_alive(philo) == 0)
+			// {
 				pthread_mutex_lock(philo->state->death_mutex);
 				if (philo->state->died_first == 0)
 					philo->state->died_first = philo->no;
 				pthread_mutex_unlock(philo->state->death_mutex);
 				print_message(philo, "died");
-			}
+			// }
 
 			return (EXIT_PHILO_DEATH);
 		}

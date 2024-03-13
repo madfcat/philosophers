@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/13 18:21:15 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 00:34:45 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,9 +39,9 @@ int meals_per_philo = 10; */
 /**
  * @return 0 if noone died, otherwise, should return philo number
 */
-int check_alive(t_philo *philo)
+int	check_alive(t_philo *philo)
 {
-	int result;
+	int	result;
 
 	pthread_mutex_lock(philo->state->death_mutex);
 	result = philo->state->died_first;
@@ -62,17 +62,17 @@ int check_alive(t_philo *philo)
 
 t_bool	check_fork(t_philo *philo)
 {
-	int result;
-	
+	int	result;
+
 	pthread_mutex_lock(&philo->fork_mutex);
 	result = philo->fork_available;
 	pthread_mutex_unlock(&philo->fork_mutex);
 	return (result);
 }
 
-int check_meal(t_philo *philo)
+int	check_meal(t_philo *philo)
 {
-	int result;
+	int	result;
 
 	pthread_mutex_lock(philo->state->meal_mutex);
 	result = philo->state->meals_left;
@@ -202,13 +202,6 @@ int	take_forks_eat(t_philo *philo)
 	// {
 	// 	usleep(200);
 	// }
-
-	while(!check_fork(philo))
-	{
-			// printf("I think\n");
-		if (thread_sleep_usec(philo, 10) == EXIT_PHILO_DEATH)
-			return (EXIT_PHILO_DEATH);
-	}
 	
 	if (first_fork(philo) == EXIT_FAILURE)
 		return (EXIT_FAILURE);
@@ -236,6 +229,12 @@ int	take_forks_eat(t_philo *philo)
 		return (EXIT_PHILO_DEATH);
 
 	print_message(philo, "is thinking");
+	while(!check_fork(philo))
+	{
+			// printf("I think\n");
+		if (thread_sleep_usec(philo, 10) == EXIT_PHILO_DEATH)
+			return (EXIT_PHILO_DEATH);
+	}
 	return (EXIT_SUCCESS);
 }
 
@@ -380,9 +379,28 @@ int	join_philo_threads(t_state *state)
 	return (EXIT_SUCCESS);
 }
 
+int check_args(char const *argv[])
+{
+	int i;
+
+	i = 1;
+	while (argv[i])
+	{
+		if (check_arg(argv[i]))
+		{
+			write(2, "Wrong argument format\n", 23);
+			return (EXIT_FAILURE);
+		}
+		i++;
+	}
+	return (EXIT_SUCCESS);
+}
+
 int	init_state(t_state *state, char const *argv[],
 	pthread_mutex_t *state_mutex, pthread_mutex_t *meal_mutex)
 {
+	if (check_args(argv) == EXIT_FAILURE)
+		return (EXIT_FAILURE);
 	state->number_of_philosophers = ft_atoi(argv[1]);
 	state->time_to_die = ft_atoi(argv[2]);
 	state->time_to_eat = ft_atoi(argv[3]);

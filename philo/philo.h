@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/13 18:21:17 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 00:34:27 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,6 +86,8 @@ typedef struct s_philo
 	t_state			*state;
 }	t_philo;
 
+int				check_arg(const char *str);
+
 unsigned long	gettime_usec(struct timeval time);
 unsigned long	gettime_ms(struct timeval time);
 int				print_message(t_philo *philo, char *msg);
@@ -98,5 +100,8 @@ int				check_alive(t_philo *philo);
 int				check_meal(t_philo *philo);
 
 int				ft_atoi(const char *str);
+char			*ft_itoa(int n);
+int				ft_strncmp(const char *s1, const char *s2, unsigned int n);
+int				ft_strlen(const char *str);
 
 #endif
