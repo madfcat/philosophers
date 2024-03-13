@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/12 23:14:45 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/13 18:21:17 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,7 @@ typedef struct s_philo
 
 	t_status		status;
 	t_bool			fork_available;
+	char			forks_count;
 	// t_bool			start;
 
 	pthread_mutex_t	fork_mutex;

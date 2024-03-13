@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/13 00:35:30 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/13 18:21:15 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -133,62 +133,103 @@ int	eat(t_philo *philo)
 	return (EXIT_SUCCESS);
 }
 
-void first_fork(t_philo *philo)
+void fork_back(t_philo *philo)
+{
+	pthread_mutex_lock(&philo->fork_mutex);
+		philo->fork_available = true;
+	pthread_mutex_unlock(&philo->fork_mutex);
+	philo->forks_count -= 1;
+	
+	// pthread_mutex_lock(&philo->next->fork_mutex);
+	// 	philo->next->fork_available = true;
+	// pthread_mutex_unlock(&philo->next->fork_mutex);
+
+	// print_message(philo, "put forks back");
+}
+
+int first_fork(t_philo *philo)
 {
 	pthread_mutex_lock(&philo->fork_mutex);
 		if (philo->fork_available)
+		{
 			philo->fork_available = false;
+			philo->forks_count += 1;
+		}
+		else {
+			pthread_mutex_unlock(&philo->fork_mutex);
+			return (EXIT_FAILURE);
+		}
 	pthread_mutex_unlock(&philo->fork_mutex);
-		print_message(philo, "has taken the first fork");
+	print_message(philo, "has taken the first fork");
+	return (EXIT_SUCCESS);
 }
 
 int second_fork(t_philo *philo)
 {
 	if (philo->no != philo->next->no)
 	{
-	pthread_mutex_lock(&philo->next->fork_mutex);
-		if (philo->next->fork_available)
-			philo->next->fork_available = false;
-	pthread_mutex_unlock(&philo->next->fork_mutex);
+		while (!check_fork(philo->next))
+		{
+			if (thread_sleep_usec(philo, 10) == EXIT_PHILO_DEATH)
+				return (EXIT_PHILO_DEATH);
+		}
+		pthread_mutex_lock(&philo->next->fork_mutex);
+			// if (philo->next->fork_available)
+			// {
+				philo->next->fork_available = false;
+				philo->forks_count += 1;
+			// }
+/* 			else
+			{
+				pthread_mutex_unlock(&philo->next->fork_mutex);
+				// printf("philo %d can not take the second fork\n", philo->no);
+				// fork_back(philo);
+				return (EXIT_FAILURE);
+			} */
+		pthread_mutex_unlock(&philo->next->fork_mutex);
 		print_message(philo, "has taken the second fork");
 		return (EXIT_SUCCESS);
 	}
 	return (EXIT_FAILURE);
 }
 
-void forks_back(t_philo *philo)
-{
-	pthread_mutex_lock(&philo->fork_mutex);
-		philo->fork_available = true;
-	pthread_mutex_unlock(&philo->fork_mutex);
-	
-	pthread_mutex_lock(&philo->next->fork_mutex);
-		philo->next->fork_available = true;
-	pthread_mutex_unlock(&philo->next->fork_mutex);
-
-	// print_message(philo, "put forks back");
-}
-
 int	take_forks_eat(t_philo *philo)
 {
 	// struct timeval	curr_time;
 	// int 			err;
-	while(check_fork(philo) == false)
+
+	// if (philo->no % 2 == 0)
+	// {
+	// 	usleep(200);
+	// }
+
+	while(!check_fork(philo))
 	{
 			// printf("I think\n");
-		if (thread_sleep_usec(philo, 100) == EXIT_PHILO_DEATH)
+		if (thread_sleep_usec(philo, 10) == EXIT_PHILO_DEATH)
 			return (EXIT_PHILO_DEATH);
 	}
-	first_fork(philo);
 	
-	if (second_fork(philo) == EXIT_FAILURE)
+	if (first_fork(philo) == EXIT_FAILURE)
 		return (EXIT_FAILURE);
+	int second_res = second_fork(philo);
+	if (second_res != EXIT_SUCCESS)
+	{
+		return (second_res);
+	}
 
+	// if (philo->forks_count == 1 && !check_fork(philo))
+	// {
+	// 	fork_back(philo);
+	// 	return (EXIT_FAILURE);
+	// }
+	
 	// eating
 	if (eat(philo) == EXIT_PHILO_DEATH)
 		return (EXIT_PHILO_DEATH);
 
-	forks_back(philo);
+	fork_back(philo);
+	fork_back(philo->next);
 	
 	print_message(philo, "is sleeping");
 	if (thread_sleep(philo, philo->state->time_to_sleep) == EXIT_PHILO_DEATH)
