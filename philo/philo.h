@@ -6,48 +6,38 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 02:18:29 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 13:10:53 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-
-// might need to remove EXIT_OTHER_DEATH
 #ifndef PHILO_H
 # define PHILO_H
 # ifndef EXIT_PHILO_DETH
 #  define EXIT_PHILO_DEATH -1
-# endif
-# ifndef EXIT_OTHER_DEATH
-#  define EXIT_OTHER_DEATH -2
 # endif
 # include <unistd.h>
 # include <stdlib.h>
 # include <pthread.h>
 # include <sys/time.h>
 # include <stdio.h>
-     #include <string.h> // remove me
 
-typedef enum e_bool {
+typedef enum e_bool
+{
 	false = 0,
 	true = 1
 }	t_bool;
 
-// typedef enum e_status {
-// 	thinking = 1,
-// 	eating = 2,
-// 	sleeping = 3
-// }	t_status;
+typedef struct s_philo	t_philo;
 
-typedef struct s_philo t_philo;
-
-typedef struct s_state {
+typedef struct s_state
+{
 	pthread_t		id;
 	int				number_of_philosophers;
 	int				time_to_die;
 	int				time_to_eat;
 	int				time_to_sleep;
-	int 			meals_per_philo;
-	int 			meals_left;
+	int				meals_per_philo;
+	int				meals_left;
 
 	int				died_first;
 
@@ -72,21 +62,31 @@ typedef struct s_philo
 	int				meals_count;
 
 	t_bool			fork_available;
-	// char			forks_count;
 
 	pthread_mutex_t	fork_mutex;
 	pthread_mutex_t	status_mutex;
 	t_state			*state;
 }	t_philo;
 
+int				init_state(t_state *state, char const *argv[],
+					pthread_mutex_t *state_mutex, pthread_mutex_t *meal_mutex);
 int				check_arg(const char *str);
+
+int				init_philos(t_state *state);
+int				create_philo_threads(t_state *state);
+int				join_philo_threads(t_state *state);
+
+int				take_forks_eat(t_philo *philo);
+int				eat(t_philo *philo);
 
 unsigned long	gettime_usec(struct timeval time);
 unsigned long	gettime_ms(struct timeval time);
 int				print_message(t_philo *philo, char *msg);
 int				free_philos(t_philo *head);
 
-int				thread_sleep(t_philo *philo, unsigned long (*f)(struct timeval), unsigned long time, useconds_t step);
+int				thread_sleep(t_philo *philo,
+					unsigned long (*f)(struct timeval),
+					unsigned long time, useconds_t step);
 int				thread_sleep_usec(t_philo *philo, int usec);
 
 int				check_alive(t_philo *philo);

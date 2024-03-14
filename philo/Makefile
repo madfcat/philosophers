@@ -6,6 +6,10 @@ NAME = philo
 HEADER = philo.h
 
 SRCS = philo.c \
+	philo_init.c \
+	philo_state_init.c \
+	philo_eat.c \
+	philo_take.c \
 	philo_utils.c \
 	ft_atoi.c \
 	ft_strlen.c \
