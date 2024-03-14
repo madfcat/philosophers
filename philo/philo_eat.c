@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/14 13:08:40 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 14:11:55 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 22:43:43 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,12 +59,6 @@ int	eat(t_philo *philo)
 		if (philo->state->died_first == 0)
 			philo->state->died_first = philo->no;
 		pthread_mutex_unlock(philo->state->death_mutex);
-		pthread_mutex_lock(&philo->next->fork_mutex);
-		philo->next->fork_available = true;
-		pthread_mutex_unlock(&philo->next->fork_mutex);
-		pthread_mutex_lock(&philo->fork_mutex);
-		philo->fork_available = true;
-		pthread_mutex_unlock(&philo->fork_mutex);
 		return (EXIT_PHILO_DEATH);
 	}
 	return (EXIT_SUCCESS);

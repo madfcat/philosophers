@@ -6,13 +6,13 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 13:10:53 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 22:46:35 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef PHILO_H
 # define PHILO_H
-# ifndef EXIT_PHILO_DETH
+# ifndef EXIT_PHILO_DEATH
 #  define EXIT_PHILO_DEATH -1
 # endif
 # include <unistd.h>
@@ -31,7 +31,6 @@ typedef struct s_philo	t_philo;
 
 typedef struct s_state
 {
-	pthread_t		id;
 	int				number_of_philosophers;
 	int				time_to_die;
 	int				time_to_eat;
@@ -62,9 +61,8 @@ typedef struct s_philo
 	int				meals_count;
 
 	t_bool			fork_available;
-
 	pthread_mutex_t	fork_mutex;
-	pthread_mutex_t	status_mutex;
+
 	t_state			*state;
 }	t_philo;
 

@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/14 12:53:25 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 13:25:13 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 22:42:28 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,8 +23,6 @@ t_philo	*create_philo(int number, t_state *state)
 	if (!philo)
 		return (NULL);
 	if (pthread_mutex_init(&philo->fork_mutex, NULL) != EXIT_SUCCESS)
-		return (NULL);
-	if (pthread_mutex_init(&philo->status_mutex, NULL) != EXIT_SUCCESS)
 		return (NULL);
 	philo->no = number;
 	philo->next = NULL;
@@ -75,8 +73,6 @@ int	free_philos(t_philo *head)
 	while (curr)
 	{
 		if (pthread_mutex_destroy(&curr->fork_mutex) != EXIT_SUCCESS)
-			return (EXIT_FAILURE);
-		if (pthread_mutex_destroy(&curr->status_mutex) != EXIT_SUCCESS)
 			return (EXIT_FAILURE);
 		prev = curr;
 		curr = curr->next;
