@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 01:52:52 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 13:20:56 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 13:23:13 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ int	print_message(t_philo *philo, char *msg)
 	return (EXIT_SUCCESS);
 }
 
-static int	death_handle(struct timeval	curr_time, t_philo *philo)
+static int	death_handle(struct timeval curr_time, t_philo *philo)
 {
 	if (gettime_ms(curr_time) - gettime_ms(philo->meal_time)
 		> (unsigned long)philo->state->time_to_die)

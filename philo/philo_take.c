@@ -6,12 +6,15 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/14 13:04:18 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 13:19:54 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 14:37:37 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
+/**
+ * @return 2 if sucessfully taken a fork
+*/
 int	check_fork_take(t_philo *philo)
 {
 	int	result;
@@ -38,17 +41,11 @@ void	fork_back(t_philo *philo)
 
 int	first_fork(t_philo *philo)
 {
-	pthread_mutex_lock(&philo->fork_mutex);
-	if (philo->fork_available)
+	while (check_fork_take(philo) != 2)
 	{
-		philo->fork_available = false;
+		if (thread_sleep(philo, gettime_usec, 1, 100) == EXIT_PHILO_DEATH)
+			return (EXIT_PHILO_DEATH);
 	}
-	else
-	{
-		pthread_mutex_unlock(&philo->fork_mutex);
-		return (EXIT_FAILURE);
-	}
-	pthread_mutex_unlock(&philo->fork_mutex);
 	print_message(philo, "has taken the first fork");
 	return (EXIT_SUCCESS);
 }
@@ -70,20 +67,13 @@ int	second_fork(t_philo *philo)
 
 int	take_forks_eat(t_philo *philo)
 {
-	int second_res;
+	int	second_res;
 
-	while (check_fork_take(philo) != 2)
-	{
-		if (thread_sleep(philo, gettime_usec, 1, 150) == EXIT_PHILO_DEATH)
-			return (EXIT_PHILO_DEATH);
-	}
-	print_message(philo, "has taken the first fork");
-
+	if (first_fork(philo) == EXIT_PHILO_DEATH)
+		return (EXIT_PHILO_DEATH);
 	second_res = second_fork(philo);
 	if (second_res != EXIT_SUCCESS)
-	{
 		return (second_res);
-	}
 	if (eat(philo) == EXIT_PHILO_DEATH)
 		return (EXIT_PHILO_DEATH);
 	fork_back(philo);

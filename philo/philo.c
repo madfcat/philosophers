@@ -6,33 +6,9 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 13:08:29 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 14:20:12 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
-
-/*
-Arguments:
-number_of_philosophers time_to_die time_to_eat
-time_to_sleep
-[meals_per_philo]
-*/
-
-
-/*
-Allowed funcitons:
-memset, printf, malloc, free, write,
-usleep, gettimeofday, pthread_create,
-pthread_detach, pthread_join, pthread_mutex_init,
-pthread_mutex_destroy, pthread_mutex_lock,
-pthread_mutex_unlock
-*/
-
-/* int	number_of_philosophers = 17;
-int	time_to_die = 200;
-int	time_to_eat = 70;
-int	time_to_sleep = 50;
-int meals_per_philo = 10; */
 
 #include "philo.h"
 
@@ -66,7 +42,11 @@ int	main(const int argc, char const *argv[])
 	t_state			state;
 
 	if (argc < 5 || argc > 6)
+	{
+		write(2, "Wrong arguments count.\nUsage: ./philo <philos_amount> <time"
+			"_to_die> <time_to_eat> <time_to_sleep> [meals_per_philo]\n", 116);
 		return (EXIT_FAILURE);
+	}
 	if (init_state(&state, argv, &state_mutex, &meal_mutex) != EXIT_SUCCESS)
 		return (EXIT_FAILURE);
 	if (init_philos(&state) != EXIT_SUCCESS)

@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/14 13:08:40 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 13:19:09 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 14:11:55 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,11 +51,9 @@ int	eat(t_philo *philo)
 		return (EXIT_FAILURE);
 	philo->meal_time = curr_time;
 	print_message(philo, "is eating");
-	if (philo->state->meals_per_philo > -1 && handle_meals(philo)
-		== EXIT_PHILO_DEATH)
+	if (philo->state->meals_per_philo > -1 && handle_meals(philo) == -1)
 		return (EXIT_PHILO_DEATH);
-	if (thread_sleep(philo, gettime_ms, philo->state->time_to_eat, 500)
-		== EXIT_PHILO_DEATH)
+	if (thread_sleep(philo, gettime_ms, philo->state->time_to_eat, 500) == -1)
 	{
 		pthread_mutex_lock(philo->state->death_mutex);
 		if (philo->state->died_first == 0)

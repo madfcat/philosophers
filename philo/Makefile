@@ -7,14 +7,15 @@ HEADER = philo.h
 
 SRCS = philo.c \
 	philo_init.c \
+	philo_init_threads.c \
 	philo_state_init.c \
 	philo_eat.c \
 	philo_take.c \
-	philo_utils.c \
+	philo_sleep.c \
 	ft_atoi.c \
 	ft_strlen.c \
 	ft_itoa.c \
-	ft_strncmp.c \
+	ft_strncmp.c
 
 OBJ_DIR = obj/
 OBJS = $(SRCS:.c=.o)
