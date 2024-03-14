@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 01:52:52 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 12:53:18 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 13:20:56 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,8 @@ int	thread_sleep(t_philo *philo, unsigned long (*f)(struct timeval),
 	sleeping_time = f(curr_time) - f(start);
 	while (sleeping_time < time)
 	{
-		death_handle(curr_time, philo);
+		if (death_handle(curr_time, philo) == EXIT_PHILO_DEATH)
+			return (EXIT_PHILO_DEATH);
 		usleep(step);
 		err = gettimeofday(&curr_time, NULL);
 		if (err != EXIT_SUCCESS)
