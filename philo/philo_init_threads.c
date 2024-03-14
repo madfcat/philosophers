@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/14 13:24:50 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 13:28:04 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 22:53:13 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ void	*routine(void *arg)
 	philo = (t_philo *)arg;
 	if (philo->no % 2 == 0)
 	{
-		usleep(10000);
+		usleep(5000);
 	}
 	if (philo->no == 1
 		&& gettimeofday(&philo->state->start_time, NULL) != EXIT_SUCCESS)
