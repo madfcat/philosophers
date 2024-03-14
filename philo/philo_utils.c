@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/26 01:52:52 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 02:23:24 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 03:24:01 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,12 +45,12 @@ int	print_message(t_philo *philo, char *msg)
 	int				cond;
 	int				err;
 
-	cond = check_alive(philo);
 	meal_cond = true;
 	if (philo->state->meals_per_philo > 0)
 	{
 		meal_cond = check_meal(philo) > 0;
 	}
+	cond = check_alive(philo);
 	if ((cond == 0 || cond == philo->no) && meal_cond)
 	{
 		err = gettimeofday(&curr_time, NULL);

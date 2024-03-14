@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:12 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 02:45:05 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 03:24:42 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,21 @@ t_bool	check_fork(t_philo *philo)
 
 	pthread_mutex_lock(&philo->fork_mutex);
 	result = philo->fork_available;
+	pthread_mutex_unlock(&philo->fork_mutex);
+	return (result);
+}
+int	check_fork_take(t_philo *philo)
+{
+	int	result;
+
+	pthread_mutex_lock(&philo->fork_mutex);
+	result = philo->fork_available;
+	if (result == true)
+	{
+		philo->fork_available = false;
+		pthread_mutex_unlock(&philo->fork_mutex);
+		return (2);
+	}
 	pthread_mutex_unlock(&philo->fork_mutex);
 	return (result);
 }
@@ -122,7 +137,8 @@ int	eat(t_philo *philo)
 void fork_back(t_philo *philo)
 {
 	pthread_mutex_lock(&philo->fork_mutex);
-	philo->fork_available = true;
+	if (philo->fork_available == false)
+		philo->fork_available = true;
 	pthread_mutex_unlock(&philo->fork_mutex);
 	// philo->forks_count -= 1;
 }
@@ -149,15 +165,16 @@ int second_fork(t_philo *philo)
 {
 	if (philo->no != philo->next->no)
 	{
-		while (!check_fork(philo->next))
+		// while (!check_fork(philo->next))
+		while (check_fork_take(philo->next) != 2)
 		{
 			if (thread_sleep(philo, gettime_usec, 1, 100) == EXIT_PHILO_DEATH)
 				return (EXIT_PHILO_DEATH);
 		}
-		pthread_mutex_lock(&philo->next->fork_mutex);
+/* 		pthread_mutex_lock(&philo->next->fork_mutex);
 		philo->next->fork_available = false;
 		// philo->forks_count += 1;
-		pthread_mutex_unlock(&philo->next->fork_mutex);
+		pthread_mutex_unlock(&philo->next->fork_mutex); */
 		print_message(philo, "has taken the second fork");
 		return (EXIT_SUCCESS);
 	}
@@ -168,10 +185,18 @@ int	take_forks_eat(t_philo *philo)
 {
 	int second_res;
 
-	if (thread_sleep(philo, gettime_usec, 1, 1) == EXIT_PHILO_DEATH)
+/* 	if (thread_sleep(philo, gettime_usec, 1, 1) == EXIT_PHILO_DEATH)
 		return (EXIT_PHILO_DEATH);
 	if (first_fork(philo) == EXIT_FAILURE)
-		return (EXIT_FAILURE);
+		return (EXIT_FAILURE); */
+
+	while (check_fork_take(philo) != 2)
+	{
+		if (thread_sleep(philo, gettime_usec, 1, 100) == EXIT_PHILO_DEATH)
+			return (EXIT_PHILO_DEATH);
+	}
+	print_message(philo, "has taken the first fork");
+
 	second_res = second_fork(philo);
 	if (second_res != EXIT_SUCCESS)
 	{
@@ -181,16 +206,20 @@ int	take_forks_eat(t_philo *philo)
 		return (EXIT_PHILO_DEATH);
 	fork_back(philo);
 	fork_back(philo->next);
+	if (thread_sleep(philo, gettime_usec, 1, 1) == EXIT_PHILO_DEATH)
+		return (EXIT_PHILO_DEATH);
 	print_message(philo, "is sleeping");
 	if (thread_sleep(philo, gettime_ms, philo->state->time_to_sleep, 500)
 		== EXIT_PHILO_DEATH)
 		return (EXIT_PHILO_DEATH);
+	if (thread_sleep(philo, gettime_usec, 1, 1) == EXIT_PHILO_DEATH)
+		return (EXIT_PHILO_DEATH);
 	print_message(philo, "is thinking");
-	while (!check_fork(philo))
-	{
-		if (thread_sleep(philo, gettime_usec, 1, 100) == EXIT_PHILO_DEATH)
-			return (EXIT_PHILO_DEATH);
-	}
+	// while (!check_fork_take(philo))
+	// {
+	// 	if (thread_sleep(philo, gettime_usec, 1, 100) == EXIT_PHILO_DEATH)
+	// 		return (EXIT_PHILO_DEATH);
+	// }
 	return (EXIT_SUCCESS);
 }
 
