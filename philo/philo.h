@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/21 15:27:01 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 00:34:27 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/14 02:18:29 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,11 +32,11 @@ typedef enum e_bool {
 	true = 1
 }	t_bool;
 
-typedef enum e_status {
-	thinking = 1,
-	eating = 2,
-	sleeping = 3
-}	t_status;
+// typedef enum e_status {
+// 	thinking = 1,
+// 	eating = 2,
+// 	sleeping = 3
+// }	t_status;
 
 typedef struct s_philo t_philo;
 
@@ -50,16 +50,13 @@ typedef struct s_state {
 	int 			meals_left;
 
 	int				died_first;
-	// t_bool			*alive;
-	
+
 	t_philo			*head;
 
 	struct timeval	start_time;
-	// struct timeval	curr_time;
-	
+
 	pthread_mutex_t	*death_mutex;
 	pthread_mutex_t	*meal_mutex;
-	pthread_mutex_t	*curr_mutex; // not used
 }	t_state;
 
 // fork_available is a philosopher's left fork 
@@ -69,20 +66,16 @@ typedef struct s_philo
 	pthread_t		id;
 	struct s_philo	*next;
 	struct s_philo	*prev;
-	
-	// struct timeval	start_time;
+
 	struct timeval	meal_time;
 
 	int				meals_count;
 
-	t_status		status;
 	t_bool			fork_available;
-	char			forks_count;
-	// t_bool			start;
+	// char			forks_count;
 
 	pthread_mutex_t	fork_mutex;
 	pthread_mutex_t	status_mutex;
-	// pthread_mutex_t	fork_available_mutex;
 	t_state			*state;
 }	t_philo;
 
@@ -93,7 +86,7 @@ unsigned long	gettime_ms(struct timeval time);
 int				print_message(t_philo *philo, char *msg);
 int				free_philos(t_philo *head);
 
-int				thread_sleep(t_philo *philo, int ms);
+int				thread_sleep(t_philo *philo, unsigned long (*f)(struct timeval), unsigned long time, useconds_t step);
 int				thread_sleep_usec(t_philo *philo, int usec);
 
 int				check_alive(t_philo *philo);
