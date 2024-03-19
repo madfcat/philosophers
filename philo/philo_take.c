@@ -6,7 +6,7 @@
 /*   By: vshchuki <vshchuki@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/14 13:04:18 by vshchuki          #+#    #+#             */
-/*   Updated: 2024/03/14 14:37:37 by vshchuki         ###   ########.fr       */
+/*   Updated: 2024/03/19 23:18:42 by vshchuki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ int	first_fork(t_philo *philo)
 		if (thread_sleep(philo, gettime_usec, 1, 100) == EXIT_PHILO_DEATH)
 			return (EXIT_PHILO_DEATH);
 	}
-	print_message(philo, "has taken the first fork");
+	print_message(philo, "has taken a fork");
 	return (EXIT_SUCCESS);
 }
 
@@ -59,7 +59,7 @@ int	second_fork(t_philo *philo)
 			if (thread_sleep(philo, gettime_usec, 1, 150) == EXIT_PHILO_DEATH)
 				return (EXIT_PHILO_DEATH);
 		}
-		print_message(philo, "has taken the second fork");
+		print_message(philo, "has taken a fork");
 		return (EXIT_SUCCESS);
 	}
 	return (EXIT_FAILURE);
